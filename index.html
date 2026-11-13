@@ -18,7 +18,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: var(--bg);
+    background: var(--bg-alt);
     color: var(--ink);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 17px;
@@ -28,33 +28,16 @@
   }
   .wrap { max-width: 980px; margin: 0 auto; padding: 0 22px; }
 
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  }
-  header .wrap { height: 52px; display: flex; align-items: center; }
-  .brand { font-weight: 600; font-size: 21px; letter-spacing: -0.02em; }
-
-  .hero { text-align: center; padding-top: 88px; padding-bottom: 72px; }
-  .eyebrow {
-    font-size: 21px;
-    font-weight: 600;
-    color: var(--blue);
-    margin-bottom: 8px;
-    letter-spacing: 0.01em;
-  }
+  .hero { text-align: center; padding-top: 88px; padding-bottom: 44px; }
   h1 {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 700;
-    font-size: clamp(48px, 8vw, 80px);
+    font-size: clamp(38px, 5.4vw, 58px);
+    text-wrap: balance;
     line-height: 1.05;
     letter-spacing: -0.015em;
     margin-bottom: 20px;
+    color: var(--blue);
   }
   .lede {
     font-size: clamp(21px, 2.4vw, 28px);
@@ -62,13 +45,11 @@
     font-weight: 400;
     color: var(--muted);
     max-width: 680px;
-    margin: 0 auto 14px;
+    margin: 0 auto;
     letter-spacing: 0.004em;
   }
-  .say { font-size: 14px; color: var(--muted); letter-spacing: -0.01em; }
-  .say b { color: var(--ink); font-weight: 600; letter-spacing: 0.04em; }
 
-  .stage { background: var(--bg-alt); padding: 72px 0; }
+  .stage { padding: 0 0 24px; }
   .thread {
     max-width: 420px;
     margin: 0 auto;
@@ -114,23 +95,17 @@
   .step-num { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 8px; }
 
   @media (max-width: 760px) {
-    .hero { padding-top: 64px; padding-bottom: 56px; }
-    .stage { padding: 48px 0; }
+    .hero { padding-top: 64px; padding-bottom: 32px; }
+    .stage { padding: 0 0 16px; }
     .how { grid-template-columns: 1fr; gap: 36px; padding-top: 64px; padding-bottom: 80px; }
   }
 </style>
 </head>
 <body>
-  <header>
-    <div class="wrap"><div class="brand">Billett</div></div>
-  </header>
-
   <main>
     <section class="hero wrap">
-      <p class="eyebrow">Your ticket concierge, by text.</p>
-      <h1>Great seats find you.</h1>
+      <h1>Your ticket concierge, by text.</h1>
       <p class="lede">Billett watches resale prices for your teams, artists and shows. When great seats drop on a night you're free, it texts you. Reply YES and it's booked.</p>
-      <p class="say">Say it <b>BILL-ET</b>, from the French <i>billettiste</i>, the person who sells you your ticket.</p>
     </section>
 
     <section class="stage">
@@ -138,7 +113,7 @@
         <div class="thread" aria-label="Example text conversation with Billett">
           <p class="thread-top">Billett · Today 2:14 PM</p>
           <p class="msg in">Warriors vs Celtics, Sun 5:30 is looking good right now: from about $118 each all-in (usually ~$140). Want me to look into it for 2 like usual?</p>
-          <p class="msg out">Yes</p>
+          <p class="msg out">Sure, what have you got?</p>
           <p class="msg in">Found it: 2 seats, Sec 214 Row 6, $236 total. You're free Sunday. Reply YES to book.</p>
           <p class="msg out">YES</p>
           <p class="msg in">You're set! It's on your calendar. Tickets coming to your email.</p>
