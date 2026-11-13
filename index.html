@@ -370,18 +370,26 @@
       refresh();
       try {
         const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`, {
-          method: "POST",
+          method: "PATCH",
           headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ records: [{ fields: { "First name": name, "Phone": phone } }], typecast: true })
+          body: JSON.stringify({
+            performUpsert: { fieldsToMergeOn: ["Phone"] },
+            records: [{ fields: { "First name": name, "Phone": phone } }],
+            typecast: true
+          })
         });
         if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const already = !(data.createdRecords && data.createdRecords.length);
         step = "done";
         field.value = "";
         field.disabled = true;
         pill.classList.add("done");
         field.placeholder = "You're on the waitlist ✓";
         field.blur();
-        notify(`Congrats, ${name}! You're on the Billett waitlist. I'll text you when it's your turn. 🎟️`, 6000);
+        notify(already
+          ? `Looks like you're already on the waitlist, ${name}. Hang tight, I'll text you when it's your turn.`
+          : `Congrats, ${name}! You're on the Billett waitlist. I'll text you when it's your turn. 🎟️`, 6000);
       } catch (err) {
         step = "name";
         refresh();
