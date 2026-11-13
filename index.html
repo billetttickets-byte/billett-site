@@ -28,7 +28,11 @@
   }
   .wrap { max-width: 980px; margin: 0 auto; padding: 0 22px; }
 
-  .hero { text-align: center; padding-top: 88px; padding-bottom: 44px; }
+  .topbar { border-bottom: 1px solid rgba(0, 0, 0, 0.08); }
+  .topbar .wrap { height: 52px; display: flex; align-items: center; }
+  .brand { font-weight: 600; font-size: 21px; letter-spacing: -0.02em; color: var(--blue); }
+
+  .hero { text-align: center; padding-top: 72px; padding-bottom: 44px; }
   h1 {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 700;
@@ -37,7 +41,7 @@
     line-height: 1.05;
     letter-spacing: -0.015em;
     margin-bottom: 20px;
-    color: var(--blue);
+    color: var(--ink);
   }
   .lede {
     font-size: clamp(21px, 2.4vw, 28px);
@@ -94,18 +98,143 @@
   .how p { color: var(--muted); font-size: 17px; }
   .step-num { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 8px; }
 
+  /* waitlist pill */
+  .join { margin: 28px auto 0; max-width: 420px; }
+  .pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 5px 5px 18px;
+    box-shadow: 0 6px 20px -12px rgba(0, 0, 0, 0.25);
+    cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .pill.focused { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15); }
+  .pill input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    font-size: 17px;
+    color: var(--ink);
+    caret-color: var(--blue);
+    padding: 8px 0;
+  }
+  .pill input::placeholder { color: #c7c7cc; }
+  .pill.done input::placeholder { color: var(--blue); font-weight: 500; }
+  .ghost {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 17px;
+    color: #8e8e93;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .caret {
+    display: inline-block;
+    width: 2px;
+    height: 1.15em;
+    margin-left: 1px;
+    vertical-align: -0.2em;
+    background: var(--blue);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  .send {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .send:disabled { opacity: 0.35; cursor: default; }
+  .send:not(:disabled):active { transform: scale(0.92); }
+  .send svg { width: 16px; height: 16px; }
+  .pill.done { cursor: default; }
+  .pill.done .send { display: none; }
+
+  /* iOS-style notification banners */
+  .banners {
+    position: fixed;
+    top: 10px;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    justify-content: center;
+    padding: 0 12px;
+    pointer-events: none;
+  }
+  .banner {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+    transform: translateY(-140%);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.15), opacity 0.3s;
+  }
+  .banner.show { transform: translateY(0); opacity: 1; }
+  .banner .icon {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: var(--blue);
+    display: grid;
+    place-items: center;
+  }
+  .banner .icon svg { width: 22px; height: 22px; }
+  .banner .body { flex: 1; min-width: 0; text-align: left; }
+  .banner .meta { display: flex; justify-content: space-between; font-size: 13px; }
+  .banner .meta b { font-weight: 600; }
+  .banner .meta span { color: var(--muted); }
+  .banner .text { font-size: 15px; line-height: 1.3; letter-spacing: -0.01em; margin-top: 1px; }
+
   @media (max-width: 760px) {
-    .hero { padding-top: 64px; padding-bottom: 32px; }
+    .hero { padding-top: 40px; padding-bottom: 32px; }
     .stage { padding: 0 0 16px; }
     .how { grid-template-columns: 1fr; gap: 36px; padding-top: 64px; padding-bottom: 80px; }
   }
 </style>
 </head>
 <body>
+  <header class="topbar"><div class="wrap"><div class="brand">Billett</div></div></header>
+
   <main>
     <section class="hero wrap">
       <h1>Your ticket concierge, by text.</h1>
       <p class="lede">Billett watches resale prices for your teams, artists and shows. When great seats drop on a night you're free, it texts you. Reply YES and it's booked.</p>
+
+      <form class="join" id="join" autocomplete="on" novalidate>
+        <div class="pill" id="pill">
+          <span class="ghost" id="ghost"><span id="ghostText"></span><span class="caret"></span></span>
+          <input id="field" type="tel" inputmode="tel" autocomplete="tel" aria-label="Join the waitlist">
+          <button class="send" id="send" type="submit" aria-label="Send" disabled>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg>
+          </button>
+        </div>
+      </form>
     </section>
 
     <section class="stage">
@@ -139,5 +268,127 @@
       </div>
     </section>
   </main>
+
+  <div class="banners" aria-live="polite"><div class="banner" id="banner">
+    <div class="icon"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2.5" fill="#fff"/><circle cx="2" cy="12" r="2.6" fill="#0071e3"/><circle cx="22" cy="12" r="2.6" fill="#0071e3"/></svg></div>
+    <div class="body">
+      <div class="meta"><b>Billett</b><span>now</span></div>
+      <div class="text" id="bannerText"></div>
+    </div>
+  </div></div>
+
+<script>
+  // Airtable settings. The token must be write-only for this one base (scope: data.records:write).
+  const AIRTABLE_BASE_ID = "appR2J0ufkVocBzPe";
+  const AIRTABLE_TABLE = "tblPTGSAMskvko0Dp"; // the "Waitlist" table
+  const AIRTABLE_TOKEN = "PASTE_TOKEN_HERE";
+
+  const pill = document.getElementById("pill");
+  const field = document.getElementById("field");
+  const send = document.getElementById("send");
+  const ghost = document.getElementById("ghost");
+  const ghostText = document.getElementById("ghostText");
+  const banner = document.getElementById("banner");
+  const bannerText = document.getElementById("bannerText");
+
+  let step = "idle"; // idle -> phone -> name -> sending -> done
+  let phone = "";
+  let bannerTimer;
+
+  // Typed-out placeholder
+  const label = "Join the waitlist";
+  let i = 0;
+  (function type() {
+    if (i <= label.length) { ghostText.textContent = label.slice(0, i++); setTimeout(type, 70); }
+  })();
+
+  function notify(msg, hideAfter) {
+    clearTimeout(bannerTimer);
+    banner.classList.remove("show");
+    setTimeout(() => {
+      bannerText.textContent = msg;
+      banner.classList.add("show");
+      if (hideAfter) bannerTimer = setTimeout(() => banner.classList.remove("show"), hideAfter);
+    }, 180);
+  }
+
+  function digits(v) { return v.replace(/\D/g, ""); }
+  function validPhone(v) { const d = digits(v); return d.length === 10 || (d.length === 11 && d[0] === "1"); }
+  function toE164(v) { const d = digits(v); return "+" + (d.length === 10 ? "1" + d : d); }
+  function formatPhone(v) {
+    let d = digits(v); if (d.length === 11 && d[0] === "1") d = d.slice(1);
+    d = d.slice(0, 10);
+    if (d.length > 6) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+    if (d.length > 3) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+    return d;
+  }
+  function refresh() {
+    ghost.hidden = step !== "idle" || field.value.length > 0;
+    if (step === "phone") send.disabled = !validPhone(field.value);
+    else if (step === "name") send.disabled = field.value.trim().length === 0;
+    else send.disabled = true;
+  }
+
+  function startPhone() {
+    if (step !== "idle") return;
+    step = "phone";
+    field.placeholder = "Phone number";
+    notify("What's your phone number? I'll text you when your spot opens.");
+    refresh();
+  }
+
+  pill.addEventListener("click", () => field.focus());
+  field.addEventListener("focus", () => { pill.classList.add("focused"); startPhone(); });
+  field.addEventListener("blur", () => pill.classList.remove("focused"));
+  field.addEventListener("input", () => {
+    if (step === "phone") field.value = formatPhone(field.value);
+    refresh();
+  });
+
+  document.getElementById("join").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (send.disabled) return;
+
+    if (step === "phone") {
+      phone = toE164(field.value);
+      field.value = "";
+      field.type = "text";
+      field.inputMode = "text";
+      field.autocomplete = "given-name";
+      field.setAttribute("aria-label", "First name");
+      field.placeholder = "First name";
+      step = "name";
+      refresh();
+      field.focus();
+      notify("Got it. And what's your first name?");
+      return;
+    }
+
+    if (step === "name") {
+      const name = field.value.trim();
+      step = "sending";
+      refresh();
+      try {
+        const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ records: [{ fields: { "First name": name, "Phone": phone } }], typecast: true })
+        });
+        if (!res.ok) throw new Error(res.status);
+        step = "done";
+        field.value = "";
+        field.disabled = true;
+        pill.classList.add("done");
+        field.placeholder = "You're on the waitlist ✓";
+        field.blur();
+        notify(`Congrats, ${name}! You're on the Billett waitlist. I'll text you when it's your turn. 🎟️`, 6000);
+      } catch (err) {
+        step = "name";
+        refresh();
+        notify("Hmm, that didn't go through. Tap the arrow to try again.");
+      }
+    }
+  });
+</script>
 </body>
 </html>
