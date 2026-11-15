@@ -278,10 +278,8 @@
   </div></div>
 
 <script>
-  // Airtable settings. The token must be write-only for this one base (scope: data.records:write).
-  const AIRTABLE_BASE_ID = "appR2J0ufkVocBzPe";
-  const AIRTABLE_TABLE = "tblPTGSAMskvko0Dp"; // the "Waitlist" table
-  const AIRTABLE_TOKEN = "patWgg8dT8joeBKZ0.81831e232dd146365f66c7a5977e4237e4ee24c548b4d98bd9136f3d2ba74ccd";
+  // The waitlist is saved by the Billett app. No keys or tokens live in this page.
+  const WAITLIST_URL = "https://app.billett.app/waitlist";
 
   const pill = document.getElementById("pill");
   const field = document.getElementById("field");
@@ -369,18 +367,14 @@
       step = "sending";
       refresh();
       try {
-        const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`, {
-          method: "PATCH",
-          headers: { "Authorization": `Bearer ${AIRTABLE_TOKEN}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            performUpsert: { fieldsToMergeOn: ["Phone"] },
-            records: [{ fields: { "First name": name, "Phone": phone } }],
-            typecast: true
-          })
+        const res = await fetch(WAITLIST_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: phone, name: name })
         });
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
-        const already = !(data.createdRecords && data.createdRecords.length);
+        const already = data.status === "already_on_waitlist";
         step = "done";
         field.value = "";
         field.disabled = true;
