@@ -216,6 +216,10 @@
     .stage { padding: 0 0 16px; }
     .how { grid-template-columns: 1fr; gap: 36px; padding-top: 64px; padding-bottom: 80px; }
   }
+  .footer { border-top: 1px solid rgba(0, 0, 0, 0.08); padding: 22px 0 36px; font-size: 12px; color: var(--muted); }
+  .footer nav { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 6px; }
+  .footer a { color: var(--muted); text-decoration: none; }
+  .footer a:hover { color: var(--ink); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -268,6 +272,10 @@
       </div>
     </section>
   </main>
+  <footer class="footer"><div class="wrap">
+    <nav aria-label="Legal"><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/refunds">Refunds</a></nav>
+    <p>Billett · Text +1 (225) 544-8890 · <a href="mailto:billett.tickets@gmail.com">billett.tickets@gmail.com</a></p>
+  </div></footer>
 
   <div class="banners" aria-live="polite"><div class="banner" id="banner">
     <div class="icon"><svg viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="12" rx="2.5" fill="#fff"/><circle cx="2" cy="12" r="2.6" fill="#0071e3"/><circle cx="22" cy="12" r="2.6" fill="#0071e3"/></svg></div>
