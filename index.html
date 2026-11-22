@@ -289,8 +289,7 @@
   const banner = document.getElementById("banner");
   const bannerText = document.getElementById("bannerText");
 
-  let step = "idle"; // idle -> phone -> name -> sending -> done
-  let phone = "";
+  let step = "idle"; // idle -> phone -> sending -> done
   let bannerTimer;
 
   // Typed-out placeholder
@@ -311,8 +310,6 @@
   }
 
   function digits(v) { return v.replace(/\D/g, ""); }
-  // A name with only spaces or invisible characters doesn't count as a name.
-  function cleanName(v) { return v.replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, "").replace(/\s+/g, " ").trim(); }
   function validPhone(v) { const d = digits(v); return d.length === 10 || (d.length === 11 && d[0] === "1"); }
   function toE164(v) { const d = digits(v); return "+" + (d.length === 10 ? "1" + d : d); }
   function formatPhone(v) {
@@ -324,9 +321,7 @@
   }
   function refresh() {
     ghost.hidden = step !== "idle" || field.value.length > 0;
-    if (step === "phone") send.disabled = !validPhone(field.value);
-    else if (step === "name") send.disabled = cleanName(field.value).length === 0;
-    else send.disabled = true;
+    send.disabled = step !== "phone" || !validPhone(field.value);
   }
 
   function startPhone() {
@@ -340,13 +335,7 @@
   // Back to the phone question, e.g. if the app didn't accept the number.
   function askPhoneAgain(msg) {
     step = "phone";
-    phone = "";
     field.value = "";
-    field.type = "tel";
-    field.inputMode = "tel";
-    field.autocomplete = "tel";
-    field.setAttribute("aria-label", "Phone number");
-    field.placeholder = "Phone number";
     refresh();
     field.focus();
     notify(msg);
@@ -364,67 +353,51 @@
     e.preventDefault();
     if (send.disabled) return;
 
-    if (step === "phone") {
-      phone = toE164(field.value);
+    if (step !== "phone") return;
+    // Just the number: Billett asks for the name later, during setup.
+    const phone = toE164(field.value);
+    step = "sending";
+    refresh();
+    let data = null;
+    let status = 0;
+    try {
+      const res = await fetch(WAITLIST_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phone })
+      });
+      status = res.status;
+      data = await res.json().catch(() => null);
+    } catch (err) {
+      status = 0;
+    }
+
+    // The app says which it was: a new sign-up, or a number already on the list.
+    const result = status === 200 && data ? data.status : null;
+    if (result === "added" || result === "already_on_waitlist") {
+      const already = result === "already_on_waitlist";
+      step = "done";
       field.value = "";
-      field.type = "text";
-      field.inputMode = "text";
-      field.autocomplete = "given-name";
-      field.setAttribute("aria-label", "First name");
-      field.placeholder = "First name";
-      step = "name";
-      refresh();
-      field.focus();
-      notify("Got it. And what's your first name?");
+      field.disabled = true;
+      pill.classList.add("done");
+      // The banner goes away after a few seconds; the pill keeps saying which it was.
+      field.placeholder = already ? "Already on the waitlist ✓" : "You're on the waitlist ✓";
+      pill.dataset.result = result;
+      field.blur();
+      notify(already
+        ? "Looks like you're already on the waitlist. Hang tight, I'll text you when it's your turn."
+        : "Congrats! You're on the Billett waitlist. I'll text you when it's your turn. 🎟️", 8000);
       return;
     }
-
-    if (step === "name") {
-      const name = cleanName(field.value);
-      if (!name) return;
-      step = "sending";
-      refresh();
-      let data = null;
-      let status = 0;
-      try {
-        const res = await fetch(WAITLIST_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: phone, name: name })
-        });
-        status = res.status;
-        data = await res.json().catch(() => null);
-      } catch (err) {
-        status = 0;
-      }
-
-      // The app says which it was: a new sign-up, or a number already on the list.
-      const result = status === 200 && data ? data.status : null;
-      if (result === "added" || result === "already_on_waitlist") {
-        const already = result === "already_on_waitlist";
-        step = "done";
-        field.value = "";
-        field.disabled = true;
-        pill.classList.add("done");
-        // The banner goes away after a few seconds; the pill keeps saying which it was.
-        field.placeholder = already ? "Already on the waitlist ✓" : "You're on the waitlist ✓";
-        pill.dataset.result = result;
-        field.blur();
-        notify(already
-          ? `Looks like you're already on the waitlist, ${name}. Hang tight, I'll text you when it's your turn.`
-          : `Congrats, ${name}! You're on the Billett waitlist. I'll text you when it's your turn. 🎟️`, 8000);
-        return;
-      }
-      if (status === 400 && data && data.error === "invalid_phone") {
-        askPhoneAgain("Hmm, that number didn't look right. Mind typing it again?");
-        return;
-      }
-      step = "name";
-      refresh();
-      if (status === 400 && data && data.error === "invalid_name") notify("I need your first name to save your spot.");
-      else if (status === 429) notify("Lots of sign-ups right now. Give it a minute, then tap the arrow again.");
-      else notify("Hmm, that didn't go through. Tap the arrow to try again.");
+    if (status === 400 && data && data.error === "invalid_phone") {
+      askPhoneAgain("Hmm, that number didn't look right. Mind typing it again?");
+      return;
     }
+    // Keep the number in the box, so one more tap of the arrow tries again.
+    step = "phone";
+    refresh();
+    if (status === 429) notify("Lots of sign-ups right now. Give it a minute, then tap the arrow again.");
+    else notify("Hmm, that didn't go through. Tap the arrow to try again.");
   });
 </script>
 </body>
