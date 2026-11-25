@@ -53,33 +53,86 @@
     letter-spacing: 0.004em;
   }
 
-  .stage { padding: 0 0 24px; }
-  .thread {
-    max-width: 420px;
+  /* demo video: phone screen on mobile, inside a phone frame on desktop */
+  .demo { padding: 0 0 24px; }
+  .phone {
+    position: relative;
+    max-width: min(360px, calc((100vh - 40px) * 720 / 1560));
     margin: 0 auto;
-    background: var(--bg);
-    border-radius: 36px;
-    padding: 30px 20px 24px;
-    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.25);
   }
-  .thread-top {
+  .demo-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 720 / 1560;
+    object-fit: cover;
+    background: #000;
+    border-radius: 30px;
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+  /* Tap-to-play (slow or data-saving connections): sits below the poster's notification */
+  .play {
+    position: absolute;
+    left: 50%;
+    top: 72%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 22px 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--blue);
+    color: #fff;
+    font: inherit;
+    font-size: 17px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+  }
+  .play[hidden] { display: none; }
+  .play svg { width: 20px; height: 20px; }
+  .play:focus-visible { outline: 3px solid rgba(0, 113, 227, 0.5); outline-offset: 3px; }
+  .demo-alt {
+    max-width: 460px;
+    margin: 16px auto 0;
     text-align: center;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 18px;
-  }
-  .msg {
-    width: fit-content;
-    max-width: 82%;
-    padding: 9px 14px;
-    border-radius: 19px;
-    font-size: 16px;
-    line-height: 1.35;
+    font-size: 14px;
+    line-height: 1.43;
     letter-spacing: -0.01em;
-    margin-bottom: 8px;
+    color: var(--muted);
+    text-wrap: balance;
   }
-  .in { background: var(--bubble-in); color: var(--ink); border-bottom-left-radius: 6px; }
-  .out { background: var(--blue); color: #fff; margin-left: auto; border-bottom-right-radius: 6px; }
+  .stills { display: none; list-style: none; }
+  .stills li { text-align: center; font-size: 15px; line-height: 1.35; color: var(--muted); }
+  .stills img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: 12px;
+    border-radius: 24px;
+    box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  }
+  /* Reduced motion: three stills instead of the video (the video is never fetched). */
+  @media (prefers-reduced-motion: reduce) {
+    .phone { display: none; }
+    .stills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 760px; margin: 0 auto; }
+  }
+  @media (min-width: 761px) {
+    .phone {
+      max-width: calc(min(360px, (100vh - 120px) * 720 / 1560) + 24px);
+      padding: 12px;
+      background: #1d1d1f;
+      border-radius: 54px;
+      box-shadow:
+        inset 0 0 0 1.5px #3a3a3c,
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 50px 90px -45px rgba(0, 0, 0, 0.45);
+    }
+    .demo-video { border-radius: 42px; box-shadow: none; }
+  }
 
   .how {
     padding-top: 96px;
@@ -213,7 +266,9 @@
 
   @media (max-width: 760px) {
     .hero { padding-top: 40px; padding-bottom: 32px; }
-    .stage { padding: 0 0 16px; }
+    .demo { padding: 0 0 16px; }
+    .stills { grid-template-columns: 1fr; max-width: 280px; gap: 32px; }
+    .demo-alt { font-size: 13px; text-wrap: wrap; }
     .how { grid-template-columns: 1fr; gap: 36px; padding-top: 64px; padding-bottom: 80px; }
   }
 </style>
@@ -225,6 +280,27 @@
     <section class="hero wrap">
       <h1>Your ticket concierge, by text.</h1>
       <p class="lede">Billett watches ticket prices for your favorite teams, artists, and shows. When great seats drop on a night you're free, it texts you. Reply YES and it's booked.</p>
+    </section>
+
+    <section class="demo" aria-label="See Billett in action">
+      <div class="wrap">
+        <div class="phone">
+          <video id="demoVideo" class="demo-video" width="720" height="1560" muted playsinline loop autoplay preload="none"
+            disablepictureinpicture disableremoteplayback poster="media/demo-1-deal.webp"
+            aria-label="30-second demo, no sound. Billett texts that Warriors vs Celtics seats for Saturday at 7:30 just dropped to $109 each. You reply, Billett checks the listings and your calendar, finds 2 seats in Section 214, Row 6 for $218 all-in, and books them when you reply YES. The tickets arrive by email with QR codes.">
+            <source data-src="media/billett-demo.webm" type="video/webm">
+            <source data-src="media/billett-demo.mp4" type="video/mp4">
+          </video>
+          <button class="play" id="demoPlay" type="button" aria-label="Play the demo video" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a.8.8 0 0 0 1.2.7l10.2-6.4a.8.8 0 0 0 0-1.4L9.2 4.9A.8.8 0 0 0 8 5.6z" fill="currentColor"/></svg>Play demo
+          </button>
+        </div>
+
+        <ol class="stills">
+          <li><img src="media/demo-1-deal.webp" width="720" height="1560" loading="lazy" alt="A text from Billett: Warriors vs Celtics Saturday 7:30 just dropped to $109 a seat, usually about $140. Want 2 like usual?"><span>Billett texts you a deal.</span></li>
+          <li><img src="media/demo-2-booked.webp" width="720" height="1560" loading="lazy" alt="The chat: Billett found 2 seats in Section 214, Row 6 for $218 all-in. You reply YES, and Billett answers: Booked, tickets are in your email."><span>Reply YES. It's booked.</span></li>
+          <li><img src="media/demo-3-tickets.webp" width="720" height="1560" loading="lazy" alt="An email titled Your tickets: Warriors vs Celtics, with 2 tickets that have QR codes and an Add to Wallet button."><span>Your tickets arrive by email.</span></li>
+        </ol>
 
       <form class="join" id="join" autocomplete="on" novalidate>
         <div class="pill" id="pill">
@@ -235,18 +311,8 @@
           </button>
         </div>
       </form>
-    </section>
 
-    <section class="stage">
-      <div class="wrap">
-        <div class="thread" aria-label="Example text conversation with Billett">
-          <p class="thread-top">Billett · Today 2:14 PM</p>
-          <p class="msg in">Warriors vs Celtics, Sun 5:30 is looking good right now: from about $118 each (usually ~$140). Want me to look into it for 2 like usual?</p>
-          <p class="msg out">Sure, what have you got?</p>
-          <p class="msg in">Found 2 seats in Sec 214 Row 6 for $236 total. Here's the view: <span style="text-decoration: underline;">billett.app/v/214-6</span>. Reply YES to book.</p>
-          <p class="msg out">YES</p>
-          <p class="msg in">You're set! I added it to your calendar. Tickets coming to your email shortly.</p>
-        </div>
+        <p class="demo-alt">In the demo: Billett texts a deal, checks seats and your calendar, books on YES, and emails your tickets.</p>
       </div>
     </section>
 
@@ -399,6 +465,49 @@
     if (status === 429) notify("Lots of sign-ups right now. Give it a minute, then tap the arrow again.");
     else notify("Hmm, that didn't go through. Tap the arrow to try again.");
   });
+</script>
+
+<script>
+  // Demo video. It loads only when it nears the viewport, never under reduced motion
+  // (CSS shows three stills instead), and waits for a tap on slow or data-saving connections.
+  (function () {
+    const video = document.getElementById("demoVideo");
+    const play = document.getElementById("demoPlay");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const conn = navigator.connection;
+    const slow = !!conn && (conn.saveData === true || /^(slow-2g|2g|3g)$/.test(conn.effectiveType || ""));
+    let loaded = false;
+
+    function load() {
+      if (loaded) return;
+      loaded = true;
+      video.querySelectorAll("source[data-src]").forEach((s) => { s.src = s.dataset.src; });
+      video.load();
+    }
+    function start() {
+      load();
+      const p = video.play();
+      if (p) p.catch(() => {});
+    }
+
+    reduce.addEventListener("change", (e) => { if (e.matches && loaded) video.pause(); });
+    if (reduce.matches) return;
+
+    if (slow) {
+      video.removeAttribute("autoplay");
+      play.hidden = false;
+      play.addEventListener("click", () => { play.hidden = true; start(); });
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) { start(); return; }
+    new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) start();
+        else if (loaded) video.pause();
+      });
+    }, { rootMargin: "300px 0px" }).observe(video);
+  })();
 </script>
 </body>
 </html>
