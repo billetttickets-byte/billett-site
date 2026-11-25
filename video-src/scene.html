@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=360">
+<title>Billett demo scene</title>
+<!--
+  Source for the landing-page demo video (media/billett-demo.*).
+  The site never loads this file. Everything on screen is a pure function of time:
+  window.renderAt(seconds) draws the frame for that moment (0 to 30 s).
+  render.js steps through it frame by frame and encodes the result. See render.js.
+-->
+<style>
+  @font-face {
+    font-family: "Inter Var";
+    src: url("node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: block;
+  }
+  /* Same tokens as index.html */
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #f5f5f7;
+    --ink: #1d1d1f;
+    --muted: #6e6e73;
+    --blue: #0071e3;
+    --line: #d2d2d7;
+    --bubble-in: #e9e9eb;
+    --hair: rgba(0, 0, 0, 0.08);
+    --green: #34c759;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 360px; height: 780px; overflow: hidden; background: #000; }
+  body {
+    font-family: "Inter Var", -apple-system, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-size: 17px;
+    line-height: 1.3;
+    letter-spacing: -0.011em;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  svg { display: block; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  #screen { position: absolute; inset: 0; overflow: hidden; background: #000; }
+  .layer { position: absolute; left: 0; top: 0; width: 360px; height: 780px; overflow: hidden; }
+  .hide { display: none !important; }
+
+  /* Status bar */
+  #status { height: 44px; z-index: 40; pointer-events: none; }
+  #sbTime { position: absolute; left: 30px; top: 14px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  #sbIcons { position: absolute; right: 24px; top: 17px; display: flex; gap: 6px; align-items: center; }
+
+  /* App icon (same mark as the site favicon) */
+  .app-icon { flex: none; width: 38px; height: 38px; border-radius: 9px; background: var(--blue); display: grid; place-items: center; }
+  .app-icon svg { width: 22px; height: 22px; }
+
+  /* Scene 1: lock screen */
+  #lockBg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 60% at 15% 0%, #d6e6fb 0%, rgba(214, 230, 251, 0) 62%),
+      radial-gradient(90% 55% at 100% 100%, #dfe8f6 0%, rgba(223, 232, 246, 0) 70%),
+      #f2f4f8;
+  }
+  #lockClock { position: absolute; left: 0; right: 0; top: 84px; text-align: center; transform-origin: 50% 0; }
+  #lockDay { font-size: 19px; font-weight: 500; color: rgba(29, 29, 31, 0.78); letter-spacing: -0.005em; }
+  #lockTime { font-size: 96px; font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-top: 4px; color: rgba(29, 29, 31, 0.9); }
+  #banner {
+    position: absolute; left: 12px; right: 12px; top: 286px;
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px 15px 14px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.28), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    transform-origin: 50% 50%;
+  }
+  #banner .meta { display: flex; justify-content: space-between; font-size: 14px; line-height: 1.2; }
+  #banner .meta b { font-weight: 600; }
+  #banner .meta span { color: var(--muted); }
+  #banner .text { font-size: 16px; line-height: 1.3; letter-spacing: -0.012em; margin-top: 3px; }
+  #banner .body { flex: 1; min-width: 0; }
+
+  /* Scene 2 and 4: chat thread */
+  #cube { perspective: 1100px; background: var(--bg-alt); }
+  .face { backface-visibility: hidden; -webkit-backface-visibility: hidden; transform-origin: 50% 50%; }
+  #thread { background: var(--bg); }
+  #threadIn { position: absolute; inset: 0; transform-origin: 180px 330px; }
+  .chat-head {
+    position: absolute; left: 0; right: 0; top: 44px; height: 62px;
+    display: flex; align-items: center; gap: 10px; padding: 0 16px 0 12px;
+    border-bottom: 1px solid var(--hair); background: var(--bg);
+  }
+  .chev { width: 11px; height: 19px; color: var(--blue); margin-right: 4px; }
+  .avatar { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--blue); display: grid; place-items: center; }
+  .avatar svg { width: 22px; height: 22px; }
+  .chat-name { font-size: 16px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.2; }
+  .chat-sub { font-size: 12.5px; color: var(--muted); line-height: 1.25; letter-spacing: 0; }
+  #msgs { position: absolute; left: 0; right: 0; top: 106px; padding: 16px 14px 0; }
+  .stamp { text-align: center; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-bottom: 12px; }
+  .slot { position: relative; display: flex; margin-bottom: 8px; }
+  .slot.out { justify-content: flex-end; }
+  .slot.gap { margin-top: 8px; }
+  .bubble { max-width: 78%; padding: 9px 14px 10px; border-radius: 20px; font-size: 17px; line-height: 1.3; letter-spacing: -0.012em; }
+  .bubble.in { background: var(--bubble-in); color: var(--ink); border-bottom-left-radius: 6px; transform-origin: 0 100%; }
+  .bubble.out { background: var(--blue); color: #fff; border-bottom-right-radius: 6px; transform-origin: 100% 100%; }
+  .emoji { display: inline-block; width: 1.12em; height: 1.12em; vertical-align: -0.2em; margin: 0 1px; }
+  .typing {
+    position: absolute; left: 0; top: 0; width: 66px; height: 40px;
+    border-radius: 20px; border-bottom-left-radius: 6px; background: var(--bubble-in);
+    display: flex; align-items: center; justify-content: center; gap: 5px; transform-origin: 0 100%;
+  }
+  .typing i { display: block; width: 8px; height: 8px; border-radius: 50%; background: #8e8e93; }
+  #chips { position: absolute; left: 0; right: 0; bottom: 80px; display: flex; justify-content: center; gap: 8px; }
+  .chip {
+    height: 38px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; color: var(--muted);
+  }
+  .chip.yes { color: var(--blue); border-color: var(--blue); }
+  #composer {
+    position: absolute; left: 12px; right: 12px; bottom: 22px; height: 46px;
+    display: flex; align-items: center; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 5px 5px 18px;
+  }
+  #cText { font-size: 17px; letter-spacing: -0.012em; white-space: pre; }
+  #cPh { font-size: 17px; color: #c7c7cc; letter-spacing: -0.012em; }
+  #cCaret { display: inline-block; width: 2px; height: 21px; background: var(--blue); margin-left: 1px; }
+  #cSend { flex: none; margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; }
+  #cSend svg { width: 16px; height: 16px; }
+
+  /* Scene 3: Billett at work */
+  #montage { background: var(--bg-alt); }
+  #mLabel {
+    position: absolute; top: 52px; left: 0; right: 0; margin: 0 auto; width: fit-content;
+    display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px 0 12px; border-radius: 999px;
+    background: var(--bg); font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+    box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.18);
+  }
+  #mLabel i { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
+  .shot { position: absolute; inset: 0; }
+  .panel { position: absolute; left: 12px; right: 12px; background: var(--bg); border-radius: 22px; box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.3); overflow: hidden; }
+  #pList { top: 98px; height: 386px; }
+  #pCal { top: 496px; height: 266px; }
+  .p-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 16px 0; }
+  .p-title { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+  .p-sub { font-size: 13px; color: var(--muted); letter-spacing: 0; margin-top: 2px; }
+  .p-count { text-align: right; line-height: 1.1; }
+  .p-count b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .p-count small { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 1px; }
+  #scanBar { position: absolute; left: 16px; right: 16px; top: 64px; height: 3px; border-radius: 2px; background: #ececf0; overflow: hidden; }
+  #scanBar i { display: block; height: 100%; width: 100%; background: var(--blue); transform-origin: 0 50%; }
+  .filters { position: absolute; left: 16px; right: 16px; top: 74px; display: flex; justify-content: space-between; }
+  .f {
+    flex: none; display: flex; align-items: center; gap: 3px; height: 28px; padding: 0 10px 0 8px; border-radius: 999px; white-space: nowrap;
+    border: 1px solid var(--line); font-size: 12.5px; font-weight: 500; letter-spacing: -0.005em; color: var(--muted); background: var(--bg);
+  }
+  .f svg { width: 11px; height: 11px; }
+  .f.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .list-win { position: absolute; left: 0; right: 0; top: 110px; height: 276px; overflow: hidden; border-top: 1px solid var(--hair); }
+  .row {
+    position: absolute; left: 0; right: 0; height: 46px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; border-bottom: 1px solid var(--hair); background: var(--bg);
+  }
+  .row .sec { font-size: 15px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.2; }
+  .row .meta { font-size: 12px; color: var(--muted); letter-spacing: 0; line-height: 1.25; }
+  .row .price { position: relative; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
+  .row .price small { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+  .row .strike { position: absolute; left: -2px; top: 50%; height: 1.5px; width: calc(100% + 4px); background: var(--ink); transform-origin: 0 50%; }
+  .row .tag { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 600; letter-spacing: 0; margin-left: 6px; vertical-align: 1px; transform-origin: 0 50%; }
+  .row .hl { position: absolute; inset: 0; background: rgba(0, 113, 227, 0.07); }
+  .row .hl::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--blue); }
+  .row > div { position: relative; }
+
+  .cal { position: absolute; left: 14px; right: 14px; top: 58px; height: 196px; }
+  .cal .dayh { position: absolute; top: 0; height: 18px; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+  .cal .dayh.on { color: var(--blue); font-weight: 700; }
+  .cal .hr { position: absolute; left: 34px; right: 0; height: 1px; background: var(--hair); }
+  .cal .hl { position: absolute; left: 0; width: 32px; font-size: 10px; color: var(--muted); letter-spacing: 0; transform: translateY(-50%); }
+  .cal .busy { position: absolute; border-radius: 6px; background: var(--bubble-in); }
+  .cal .sweep { position: absolute; top: 20px; height: 176px; border-radius: 8px; background: rgba(0, 113, 227, 0.07); }
+  .cal .free {
+    position: absolute; border-radius: 7px; border: 1.5px solid var(--blue); background: #e6f1fc;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transform-origin: 50% 0;
+    color: var(--blue); font-size: 11px; font-weight: 700; letter-spacing: 0;
+  }
+  .ckc { width: 16px; height: 16px; }
+
+  .bigcard { position: absolute; left: 20px; right: 20px; background: var(--bg); border-radius: 28px; box-shadow: 0 26px 50px -30px rgba(0, 0, 0, 0.32); padding: 26px 24px 24px; }
+  #cardC { top: 196px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; letter-spacing: 0; }
+  .c-sec { font-size: 32px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.1; margin-top: 18px; }
+  .c-sub { font-size: 15px; color: var(--muted); margin-top: 6px; letter-spacing: -0.005em; }
+  .c-price { display: flex; align-items: baseline; gap: 4px; margin-top: 20px; }
+  .c-price b { font-size: 76px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+  .c-price span { font-size: 21px; color: var(--muted); font-weight: 500; letter-spacing: -0.01em; }
+  .c-usual { font-size: 15px; color: var(--muted); margin-top: 8px; letter-spacing: -0.005em; }
+  .c-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--hair); font-size: 16px; }
+  .c-total span { color: var(--muted); }
+  .c-total b { font-weight: 600; }
+
+  #cardD { top: 150px; }
+  .d-day { font-size: 32px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.1; }
+  .d-sub { font-size: 15px; color: var(--muted); margin-top: 4px; letter-spacing: -0.005em; }
+  .tl { position: relative; height: 330px; margin-top: 22px; }
+  .tl .hr { position: absolute; left: 50px; right: 0; height: 1px; background: var(--hair); }
+  .tl .lbl { position: absolute; left: 0; width: 46px; font-size: 12px; color: var(--muted); letter-spacing: 0; transform: translateY(-50%); }
+  .tl .blk { position: absolute; left: 56px; right: 0; border-radius: 12px; padding: 10px 12px; overflow: hidden; }
+  .tl .blk.busy { background: #f0f0f2; color: var(--muted); font-size: 14px; }
+  .tl .blk.game { background: #e6f1fc; transform-origin: 50% 0; }
+  .tl .blk.game::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--blue); }
+  .tl .g-title { font-size: 16px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
+  .tl .g-time { font-size: 13px; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
+  .freechip {
+    position: absolute; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px 0 10px;
+    border-radius: 999px; background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; transform-origin: 100% 100%;
+  }
+  .freechip svg { width: 14px; height: 14px; }
+
+  /* Scene 5: inbox and message */
+  #mailapp { background: var(--bg); }
+  #inbox { position: absolute; inset: 0; background: var(--bg); }
+  .ib-title { position: absolute; left: 20px; top: 52px; font-size: 34px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
+  .ib-search { position: absolute; left: 16px; right: 16px; top: 104px; height: 36px; border-radius: 10px; background: #f0f0f2; display: flex; align-items: center; gap: 7px; padding: 0 10px; color: #8e8e93; font-size: 16px; letter-spacing: -0.01em; }
+  .ib-search svg { width: 15px; height: 15px; }
+  .ib-list { position: absolute; left: 0; right: 0; top: 152px; bottom: 0; overflow: hidden; border-top: 1px solid var(--hair); }
+  .ib-row { position: absolute; left: 0; right: 0; height: 88px; border-bottom: 1px solid var(--hair); background: var(--bg); }
+  .ib-row .bar { position: absolute; height: 9px; border-radius: 5px; }
+  .ib-row .press { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.05); }
+  #newRow .glow { position: absolute; inset: 0; background: rgba(0, 113, 227, 0.07); }
+  #newRow .dot { position: absolute; left: 11px; top: 20px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+  #newRow .from { position: absolute; left: 30px; top: 12px; font-size: 16px; font-weight: 600; letter-spacing: -0.012em; }
+  #newRow .when { position: absolute; right: 16px; top: 14px; font-size: 14px; color: var(--muted); letter-spacing: 0; }
+  #newRow .subj { position: absolute; left: 30px; right: 16px; top: 35px; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+  #newRow .prev { position: absolute; left: 30px; right: 16px; top: 57px; font-size: 14px; color: var(--muted); letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; }
+  #inboxDim { position: absolute; inset: 0; background: #000; opacity: 0; }
+
+  #mailview { position: absolute; inset: 0; background: var(--bg); box-shadow: -10px 0 30px -12px rgba(0, 0, 0, 0.2); }
+  .mv-nav { position: absolute; top: 44px; left: 0; right: 0; height: 44px; display: flex; align-items: center; gap: 4px; padding: 0 12px; color: var(--blue); font-size: 17px; letter-spacing: -0.012em; }
+  .mv-nav svg { width: 11px; height: 19px; }
+  .mv-subj { position: absolute; left: 20px; right: 20px; top: 96px; font-size: 26px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.14; text-wrap: balance; }
+  .mv-from { position: absolute; left: 20px; right: 20px; top: 168px; display: flex; align-items: center; gap: 10px; }
+  .mv-from .avatar { width: 36px; height: 36px; }
+  .mv-from .avatar svg { width: 20px; height: 20px; }
+  .mv-from b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .mv-from span { display: block; font-size: 13px; color: var(--muted); letter-spacing: 0; line-height: 1.25; }
+  .mv-hr { position: absolute; left: 20px; right: 0; top: 218px; height: 1px; background: var(--hair); }
+  .mv-body { position: absolute; left: 20px; right: 20px; top: 232px; font-size: 16px; line-height: 1.38; letter-spacing: -0.01em; text-wrap: balance; }
+  .tickets { position: absolute; left: 16px; right: 16px; top: 296px; display: flex; gap: 10px; }
+  .tkt { position: relative; flex: 1; background: var(--bg-alt); border-radius: 18px; overflow: hidden; transform-origin: 50% 60%; }
+  .tkt-top { padding: 13px 13px 12px; }
+  .tkt-ev { font-size: 13.5px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.2; }
+  .tkt-when { font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 2px; }
+  .tkt-cut { position: relative; height: 0; border-top: 1.5px dashed #d2d2d7; margin: 0 13px; }
+  .tkt-cut::before, .tkt-cut::after { content: ""; position: absolute; top: -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); }
+  .tkt-cut::before { left: -21px; }
+  .tkt-cut::after { right: -21px; }
+  .qr { width: 116px; height: 116px; margin: 12px auto 10px; background: #fff; border-radius: 6px; }
+  .tkt-seat { padding: 0 13px 13px; text-align: center; }
+  .tkt-seat b { display: block; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; }
+  .tkt-seat span { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 1px; }
+  #wallet { position: absolute; left: 16px; right: 16px; top: 552px; height: 50px; border-radius: 14px; background: var(--blue); color: #fff; font-size: 17px; font-weight: 600; letter-spacing: -0.012em; }
+  #wallet span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 7px; }
+  #wallet svg { width: 16px; height: 16px; }
+  .mv-foot { position: absolute; left: 20px; right: 20px; top: 618px; text-align: center; font-size: 13px; color: var(--muted); letter-spacing: 0; }
+
+  /* Scene 6: end card */
+  #end { background: var(--bg); }
+  .end-wrap { position: absolute; left: 0; right: 0; top: 236px; text-align: center; }
+  .end-icon { width: 76px; height: 76px; border-radius: 20px; background: var(--blue); margin: 0 auto; display: grid; place-items: center; }
+  .end-icon svg { width: 46px; height: 46px; }
+  .end-word { font-size: 46px; font-weight: 600; color: var(--blue); letter-spacing: -0.03em; line-height: 1.1; margin-top: 22px; }
+  .end-tag { font-size: 28px; font-weight: 600; letter-spacing: -0.028em; line-height: 1.16; margin-top: 16px; color: var(--ink); }
+  .end-hint { position: absolute; left: 0; right: 0; bottom: 70px; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 16px; color: var(--muted); letter-spacing: -0.01em; }
+  .end-hint svg { width: 18px; height: 18px; color: var(--blue); }
+
+  /* Touch indicator and black overlay */
+  #touch { position: absolute; left: 0; top: 0; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(60, 60, 67, 0.22); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55); z-index: 60; opacity: 0; }
+  #black { position: absolute; inset: 0; background: #000; z-index: 80; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- One directional blur per moving element; renderAt sets the amount from its velocity. -->
+    <filter id="mb-thread" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <filter id="mb-plist" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <filter id="mb-pcal" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <filter id="mb-shotc" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <filter id="mb-shotd" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <filter id="mb-rows" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <filter id="mb-mail" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="0 0"/></filter>
+    <symbol id="ticket" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5" fill="#fff"/><circle cx="2" cy="12" r="2.6" fill="#0071e3"/><circle cx="22" cy="12" r="2.6" fill="#0071e3"/></symbol>
+    <symbol id="check" viewBox="0 0 12 12"><path d="M2.4 6.3 4.9 8.7 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="chev" viewBox="0 0 11 19"><path d="M9.5 1.5 2 9.5l7.5 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div id="screen">
+
+  <!-- Scene 1: lock screen with the deal notification -->
+  <div id="lock" class="layer">
+    <div id="lockBg"></div>
+    <div id="lockClock"><div id="lockDay">Wednesday</div><div id="lockTime" class="tnum">2:14</div></div>
+    <div id="banner">
+      <div class="app-icon"><svg><use href="#ticket"/></svg></div>
+      <div class="body">
+        <div class="meta"><b>Billett</b><span>now</span></div>
+        <div class="text">Warriors vs Celtics Sat 7:30 just dropped to $109/seat (usually ~$140). Want 2 like usual?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scenes 2, 4 and 5: the thread and the inbox are two faces of one turn -->
+  <div id="cube" class="layer">
+    <div id="thread" class="layer face">
+      <div id="threadIn">
+        <div class="chat-head">
+          <svg class="chev"><use href="#chev"/></svg>
+          <div class="avatar"><svg><use href="#ticket"/></svg></div>
+          <div><div class="chat-name">Billett</div><div class="chat-sub">Ticket concierge</div></div>
+        </div>
+        <div id="msgs">
+          <p class="stamp">Today 2:14 PM</p>
+          <div class="slot in" id="m1"><p class="bubble in">Warriors vs Celtics Sat 7:30 just dropped to $109/seat (usually ~$140). Want 2 like usual?</p></div>
+          <div class="slot out" id="m2"><p class="bubble out">yes, what do you have?</p></div>
+          <div class="slot in" id="m3"><div class="typing" id="ty1"><i></i><i></i><i></i></div><p class="bubble in">Found 2 in Sec 214, Row 6 — $218 all-in. Reply YES to book.</p></div>
+          <div class="slot out gap" id="m4"><p class="bubble out">YES</p></div>
+          <div class="slot in" id="m5"><div class="typing" id="ty2"><i></i><i></i><i></i></div><p class="bubble in">Booked <svg class="emoji" viewBox="0 0 20 20"><rect x="1" y="1" width="18" height="18" rx="4.5" fill="#34c759"/><path d="M5.6 10.3 8.6 13.2 14.6 6.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Tickets are in your email.</p></div>
+        </div>
+        <div id="chips"><span class="chip yes" id="chipYes">YES</span><span class="chip" id="chipNo">No thanks</span></div>
+        <div id="composer">
+          <span id="cPh">Text message</span><span id="cText"></span><span id="cCaret"></span>
+          <div id="cSend"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M3.5 7.5 8 3l4.5 4.5"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mailapp" class="layer face">
+      <div id="inbox">
+        <div class="ib-title">Inbox</div>
+        <div class="ib-search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5" stroke-linecap="round"/></svg>Search</div>
+        <div class="ib-list" id="ibList">
+          <div class="ib-row" id="newRow">
+            <div class="glow"></div><div class="press"></div>
+            <div class="dot"></div>
+            <div class="from">Billett</div><div class="when">now</div>
+            <div class="subj">Your tickets: Warriors vs Celtics</div>
+            <div class="prev">2 tickets · Sat 7:30 PM · Sec 214, Row 6</div>
+          </div>
+        </div>
+        <div id="inboxDim"></div>
+      </div>
+      <div id="mailview">
+        <div class="mv-nav"><svg><use href="#chev"/></svg>Inbox</div>
+        <div class="mv-subj">Your tickets: Warriors vs Celtics</div>
+        <div class="mv-from">
+          <div class="avatar"><svg><use href="#ticket"/></svg></div>
+          <div><b>Billett</b><span>to me · now</span></div>
+        </div>
+        <div class="mv-hr"></div>
+        <div class="mv-body">You're all set for Saturday. Here are your tickets.</div>
+        <div class="tickets">
+          <div class="tkt" id="tk1">
+            <div class="tkt-top"><div class="tkt-ev">Warriors vs Celtics</div><div class="tkt-when">Sat 7:30 PM</div></div>
+            <div class="tkt-cut"></div>
+            <div class="qr" id="qr1"></div>
+            <div class="tkt-seat"><b>Sec 214 · Row 6</b><span>Seat 7</span></div>
+          </div>
+          <div class="tkt" id="tk2">
+            <div class="tkt-top"><div class="tkt-ev">Warriors vs Celtics</div><div class="tkt-when">Sat 7:30 PM</div></div>
+            <div class="tkt-cut"></div>
+            <div class="qr" id="qr2"></div>
+            <div class="tkt-seat"><b>Sec 214 · Row 6</b><span>Seat 8</span></div>
+          </div>
+        </div>
+        <div id="wallet"><span id="wAdd">Add to Wallet</span><span id="wDone"><svg><use href="#check"/></svg>Added</span></div>
+        <div class="mv-foot" id="mvFoot">Paid $218 all-in for 2 tickets</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scene 3: Billett at work -->
+  <div id="montage" class="layer">
+    <div class="shot" id="shotAB">
+      <div class="panel" id="pList">
+        <div class="p-head">
+          <div><div class="p-title">Warriors vs Celtics</div><div class="p-sub">Sat 7:30 PM · 2 seats</div></div>
+          <div class="p-count"><b class="tnum" id="cnt">148</b><small id="cntLbl">listings</small></div>
+        </div>
+        <div id="scanBar"><i></i></div>
+        <div class="filters">
+          <span class="f" id="f1"><svg><use href="#check"/></svg>2 together</span>
+          <span class="f" id="f2"><svg><use href="#check"/></svg>Clear view</span>
+          <span class="f" id="f3"><svg><use href="#check"/></svg>Under $140</span>
+        </div>
+        <div class="list-win"><div id="list"></div></div>
+      </div>
+      <div class="panel" id="pCal">
+        <div class="p-head"><div><div class="p-title">Your week</div><div class="p-sub">Evenings</div></div></div>
+        <div class="cal" id="cal"></div>
+      </div>
+    </div>
+
+    <div class="shot" id="shotC">
+      <div class="bigcard" id="cardC">
+        <span class="badge" id="cBadge">Best value</span>
+        <div class="c-sec" id="cSec">Sec 214 · Row 6</div>
+        <div class="c-sub" id="cSub">2 seats together · Clear view</div>
+        <div class="c-price" id="cPrice"><b class="tnum" id="cNum">$109</b><span>/seat</span></div>
+        <div class="c-usual" id="cUsual">Usually ~$140</div>
+        <div class="c-total" id="cTotal"><span>All-in for 2</span><b>$218</b></div>
+      </div>
+    </div>
+
+    <div class="shot" id="shotD">
+      <div class="bigcard" id="cardD">
+        <div class="d-day">Saturday</div>
+        <div class="d-sub">Your calendar</div>
+        <div class="tl" id="tl">
+          <div class="blk busy" id="dBusy" style="top:3px;height:48px">Busy</div>
+          <div class="blk game" id="dGame" style="top:138px;height:129px">
+            <div class="g-title">Warriors vs Celtics</div>
+            <div class="g-time">7:30 PM</div>
+            <div class="freechip" id="dFree"><svg><use href="#check"/></svg>Free</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mLabel"><i></i>Billett at work</div>
+  </div>
+
+  <!-- Scene 6: end card -->
+  <div id="end" class="layer">
+    <div class="end-wrap">
+      <div class="end-icon" id="eIcon"><svg><use href="#ticket"/></svg></div>
+      <div class="end-word" id="eWord">Billett</div>
+      <div class="end-tag" id="eTag">Your ticket concierge,<br>by text.</div>
+    </div>
+    <div class="end-hint" id="eHint">Join the waitlist below<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v12M4 10l5 5 5-5"/></svg></div>
+  </div>
+
+  <div id="status" class="layer">
+    <div id="sbTime" class="tnum">2:14</div>
+    <div id="sbIcons">
+      <svg width="18" height="11" viewBox="0 0 18 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3.5" stroke="currentColor" opacity="0.4"/><rect x="2.5" y="2.5" width="16" height="7" rx="2" fill="currentColor"/><path d="M24.5 4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/></svg>
+    </div>
+  </div>
+
+  <div id="touch"></div>
+  <div id="black"></div>
+</div>
+
+<script>
+(async () => {
+  // Build and measure only once the font is in, so text metrics are final.
+  await document.fonts.load('400 17px "Inter Var"');
+  await document.fonts.ready;
+  const W = 360, H = 780;
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- math ----------
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  function cubicBezier(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const sx = (s) => ((ax * s + bx) * s + cx) * s;
+    const sy = (s) => ((ay * s + by) * s + cy) * s;
+    const dx = (s) => (3 * ax * s + 2 * bx) * s + cx;
+    return (x) => {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      let s = x;
+      for (let i = 0; i < 8; i++) {
+        const e = sx(s) - x;
+        if (Math.abs(e) < 1e-7) return sy(s);
+        const d = dx(s);
+        if (Math.abs(d) < 1e-6) break;
+        s -= e / d;
+      }
+      let lo = 0, hi = 1; s = x;
+      for (let i = 0; i < 40; i++) { const v = sx(s); if (v < x) lo = s; else hi = s; s = (lo + hi) / 2; }
+      return sy(s);
+    };
+  }
+  const ease = {
+    out: cubicBezier(0.16, 1, 0.3, 1),     // fast in, soft out
+    soft: cubicBezier(0.22, 1, 0.36, 1),
+    inOut: cubicBezier(0.65, 0, 0.35, 1),
+    in: cubicBezier(0.55, 0, 0.8, 0.2),    // exits
+    lin: (x) => x,
+  };
+  const P = (t, t0, d, e = ease.out) => e(clamp((t - t0) / d));
+  // Damped spring 0 -> 1 with a small overshoot (bubble pops).
+  function spring(x, w = 24, z = 0.62) {
+    if (x <= 0) return 0;
+    const wd = w * Math.sqrt(1 - z * z);
+    return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x));
+  }
+  function rng(seed) { // mulberry32
+    return () => {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let r = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---------- style helpers ----------
+  const show = (el, on) => { el.classList.toggle("hide", !on); return on; };
+  function set(el, { x = 0, y = 0, s = 1, sx, sy, o = 1, r, extra = "" } = {}) {
+    const scl = sx != null || sy != null ? `scale(${sx ?? 1}, ${sy ?? 1})` : `scale(${s})`;
+    el.style.transform = `translate(${x}px, ${y}px) ${scl} ${r != null ? `rotate(${r}deg)` : ""} ${extra}`;
+    el.style.opacity = o;
+  }
+  function blur(el, id, amt, axis = "y") {
+    const f = document.querySelector(`#${id} feGaussianBlur`);
+    if (amt < 0.15) { el.style.filter = "none"; return; }
+    f.setAttribute("stdDeviation", axis === "y" ? `0 ${amt.toFixed(2)}` : `${amt.toFixed(2)} 0`);
+    el.style.filter = `url(#${id})`;
+  }
+  // Pop in with a spring (scale + rise). Returns visibility.
+  function pop(el, t, t0, { from = 0.55, rise = 10 } = {}) {
+    const x = t - t0;
+    if (x <= 0) { el.style.opacity = 0; el.style.transform = `scale(${from})`; return false; }
+    const k = spring(x);
+    set(el, { y: (1 - k) * rise, s: lerp(from, 1, k), o: clamp(x / 0.07) });
+    return true;
+  }
+  // Leave by shrinking quickly.
+  function unpop(el, t, t0, d = 0.12) {
+    const p = P(t, t0, d, ease.in);
+    set(el, { s: lerp(1, 0.6, p), o: 1 - p });
+  }
+  // Whip cuts: a shot is on screen for [tIn, tOut). It arrives moving up from below
+  // (fast in, soft out) and leaves by accelerating upward, so consecutive shots meet at
+  // the cut in one continuous upward motion. Vertical motion blur follows the velocity.
+  function whipY(t, tIn, tOut, dIn, dOut, dist) {
+    let y = 0;
+    if (tIn != null && t < tIn + dIn) y += dist * (1 - ease.out(clamp((t - tIn) / dIn)));
+    if (tOut != null && t > tOut - dOut) y -= dist * ease.in(clamp((t - tOut + dOut) / dOut));
+    return y;
+  }
+  function whip(el, filterId, t, tIn, tOut, { dIn = 0.5, dOut = 0.2, dist = 220, s = 1 } = {}) {
+    const vis = (tIn == null || t >= tIn) && (tOut == null || t < tOut);
+    if (!show(el, vis)) return false;
+    const y = whipY(t, tIn, tOut, dIn, dOut, dist);
+    const v = Math.abs(y - whipY(t - 1 / 60, tIn, tOut, dIn, dOut, dist)) * 60; // px/s
+    set(el, { y, s, o: 1 });
+    blur(el, filterId, Math.min(5, v / 320));
+    return true;
+  }
+
+  // ---------- timeline (seconds) ----------
+  const T = {
+    wake: 0.45, bannerIn: 1.05, tapBanner: 2.9, expand: 3.05,
+    typeStart: 3.95, typeEnd: 4.7, tapSend: 4.88, m2: 4.98, ty1: 5.42,
+    push: 6.45, toMontage: 7.52,
+    montageIn: 7.72, scanStart: 7.85, scanEnd: 9.3,
+    f1: 9.35, f2: 9.55, f3: 9.75, sort: 9.98, best: 10.32,
+    sweep0: 8.2, sweepStep: 0.17, free: 9.3,
+    toC: 10.85, toD: 12.2, toThread: 13.72,
+    m3: 14.12, chips: 15.05, tapYes: 15.75, m4: 15.9, ty2: 16.35, m5: 17.25,
+    flip: 18.95, flipDur: 0.62,
+    newMail: 19.85, tapMail: 20.9, push2: 21.05,
+    tickets: 21.45, tapWallet: 23.2, added: 23.36,
+    toEnd: 24.75, endIcon: 25.05, endWord: 25.2, endTag: 25.38, endHint: 25.95,
+    sleep: 29.5,
+  };
+
+  // ---------- build: listings, calendar, inbox rows, QR codes ----------
+  const ROW_H = 46;
+  const FINAL = [ // the six rows the scan stops on
+    { sec: "Sec 107 · Row 18", meta: "1 seat", price: 98, fail: 1 },
+    { sec: "Sec 218 · Row 3", meta: "2 seats together", price: 124 },
+    { sec: "Sec 214 · Row 6", meta: "2 seats together", price: 109, best: true },
+    { sec: "Sec 203 · Row 11", meta: "2 seats · limited view", price: 104, fail: 2 },
+    { sec: "Sec 212 · Row 9", meta: "2 seats together", price: 131 },
+    { sec: "Sec 120 · Row 2", meta: "2 seats together", price: 152, fail: 3 },
+  ];
+  const FILLER = 24;
+  const rows = [];
+  (function buildList() {
+    const r = rng(7);
+    const list = $("list");
+    const metas = ["2 seats together", "4 seats", "2 seats together", "3 seats", "2 seats · aisle", "1 seat"];
+    const all = [];
+    for (let i = 0; i < FILLER; i++) {
+      const lower = r() < 0.35;
+      const sec = lower ? 101 + Math.floor(r() * 24) : 201 + Math.floor(r() * 24);
+      const row = 1 + Math.floor(r() * (lower ? 22 : 14));
+      const price = lower ? 168 + Math.floor(r() * 140) : 114 + Math.floor(r() * 70);
+      all.push({ sec: `Sec ${sec} · Row ${row}`, meta: metas[Math.floor(r() * metas.length)], price });
+    }
+    all.push(...FINAL);
+    all.forEach((d, i) => {
+      const el = document.createElement("div");
+      el.className = "row";
+      el.innerHTML = `${d.best ? '<span class="hl"></span>' : ""}<div><div class="sec">${d.sec}${d.best ? '<span class="tag">Best value</span>' : ""}</div><div class="meta">${d.meta}</div></div>` +
+        `<div class="price tnum">$${d.price}<small>/seat</small>${d.fail ? '<span class="strike"></span>' : ""}</div>`;
+      list.appendChild(el);
+      rows.push({ el, d, i, hl: el.querySelector(".hl"), tag: el.querySelector(".tag"), strike: el.querySelector(".strike") });
+    });
+  })();
+
+  const CAL = { left: 34, width: 308, top: 20, hourH: 34, start: 17 };
+  CAL.colW = (CAL.width - CAL.left) / 7;
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const BUSY = [[0, 18, 19.5], [1, 17, 18.5], [1, 19.5, 21], [2, 18.5, 20.5], [3, 17.5, 19], [4, 19, 22], [5, 17, 18], [6, 18, 21]];
+  const calEls = { days: [] };
+  (function buildCal() {
+    const cal = $("cal");
+    const sweep = document.createElement("div");
+    sweep.className = "sweep"; sweep.style.width = `${CAL.colW}px`;
+    cal.appendChild(sweep); calEls.sweep = sweep;
+    DAYS.forEach((d, i) => {
+      const el = document.createElement("div");
+      el.className = "dayh"; el.textContent = d;
+      el.style.left = `${CAL.left + i * CAL.colW}px`; el.style.width = `${CAL.colW}px`;
+      cal.appendChild(el); calEls.days.push(el);
+    });
+    for (let h = 0; h <= 5; h++) {
+      const y = CAL.top + h * CAL.hourH;
+      const line = document.createElement("div"); line.className = "hr"; line.style.top = `${y}px`; cal.appendChild(line);
+      if (h < 5) { const l = document.createElement("div"); l.className = "hl"; l.style.top = `${y}px`; l.textContent = `${5 + h} PM`; cal.appendChild(l); }
+    }
+    BUSY.forEach(([d, a, b]) => {
+      const el = document.createElement("div"); el.className = "busy";
+      el.style.left = `${CAL.left + d * CAL.colW + 2.5}px`; el.style.width = `${CAL.colW - 5}px`;
+      el.style.top = `${CAL.top + (a - CAL.start) * CAL.hourH + 1.5}px`;
+      el.style.height = `${Math.min(b - a, 22 - a) * CAL.hourH - 3}px`;
+      cal.appendChild(el);
+    });
+    const free = document.createElement("div"); free.className = "free";
+    free.style.left = `${CAL.left + 5 * CAL.colW + 2}px`; free.style.width = `${CAL.colW - 4}px`;
+    free.style.top = `${CAL.top + 2.5 * CAL.hourH + 1.5}px`; free.style.height = `${2.5 * CAL.hourH - 3}px`;
+    free.innerHTML = '<svg class="ckc" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#0071e3"/><path d="M4.6 8.3 7 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Free';
+    cal.appendChild(free); calEls.free = free;
+    // Saturday timeline (shot D) hour lines
+    const tl = $("tl");
+    for (let h = 0; h <= 6; h++) {
+      const y = h * 54;
+      const line = document.createElement("div"); line.className = "hr"; line.style.top = `${y}px`; tl.insertBefore(line, tl.firstChild);
+      const l = document.createElement("div"); l.className = "lbl"; l.style.top = `${y}px`; l.textContent = `${5 + h} PM`; tl.insertBefore(l, tl.firstChild);
+    }
+  })();
+
+  const IB_H = 88;
+  const ibRows = [];
+  (function buildInbox() {
+    const r = rng(11);
+    const list = $("ibList");
+    for (let i = 0; i < 8; i++) {
+      const el = document.createElement("div");
+      el.className = "ib-row";
+      const a = 70 + Math.floor(r() * 60), b = 150 + Math.floor(r() * 90), c = 200 + Math.floor(r() * 90), d = 120 + Math.floor(r() * 110);
+      el.innerHTML =
+        `<span class="bar" style="left:30px;top:17px;width:${a}px;background:#dcdce1"></span>` +
+        `<span class="bar" style="right:16px;top:18px;width:30px;height:8px;background:#e8e8ed"></span>` +
+        `<span class="bar" style="left:30px;top:40px;width:${b}px;background:#e5e5ea"></span>` +
+        `<span class="bar" style="left:30px;top:59px;width:${Math.min(c, 300)}px;height:8px;background:#efeff2"></span>` +
+        `<span class="bar" style="left:30px;top:73px;width:${d}px;height:8px;background:#efeff2"></span>`;
+      list.appendChild(el); ibRows.push(el);
+    }
+  })();
+
+  function qrSVG(seed) {
+    const n = 25, q = 2, N = n + 2 * q, r = rng(seed);
+    const m = Array.from({ length: n }, () => Array(n).fill(0));
+    const res = Array.from({ length: n }, () => Array(n).fill(false));
+    const finder = (ox, oy) => {
+      for (let y = -1; y <= 7; y++) for (let x = -1; x <= 7; x++) {
+        const X = ox + x, Y = oy + y;
+        if (X < 0 || Y < 0 || X >= n || Y >= n) continue;
+        res[Y][X] = true;
+        const ring = Math.max(Math.abs(x - 3), Math.abs(y - 3));
+        m[Y][X] = x >= 0 && x <= 6 && y >= 0 && y <= 6 && (ring === 3 || ring <= 1) ? 1 : 0;
+      }
+    };
+    finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
+    for (let i = 8; i < n - 8; i++) { m[6][i] = m[i][6] = i % 2 === 0 ? 1 : 0; res[6][i] = res[i][6] = true; }
+    for (let y = -2; y <= 2; y++) for (let x = -2; x <= 2; x++) { // alignment pattern
+      const X = 18 + x, Y = 18 + y, ring = Math.max(Math.abs(x), Math.abs(y));
+      res[Y][X] = true; m[Y][X] = ring === 1 ? 0 : 1;
+    }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (!res[y][x]) m[y][x] = r() < 0.5 ? 1 : 0;
+    let d = "";
+    for (let y = 0; y < n; y++) {
+      let x = 0;
+      while (x < n) {
+        if (!m[y][x]) { x++; continue; }
+        let x2 = x; while (x2 < n && m[y][x2]) x2++;
+        d += `M${x + q} ${y + q}h${x2 - x}v1h${x - x2}z`;
+        x = x2;
+      }
+    }
+    return `<svg viewBox="0 0 ${N} ${N}" width="116" height="116" shape-rendering="crispEdges"><path d="${d}" fill="#1d1d1f"/></svg>`;
+  }
+  $("qr1").innerHTML = qrSVG(214);
+  $("qr2").innerHTML = qrSVG(608);
+
+  // ---------- measurements (taken once, before any transform) ----------
+  const bannerH = $("banner").offsetHeight;
+  const BANNER = { x: 12, y: 286, w: W - 24, h: bannerH };
+  const slotTop = (id) => $(id).offsetTop + $("msgs").offsetTop;
+  const chipRect = (() => { const c = $("chipYes"); return { x: c.offsetLeft + c.offsetWidth / 2, y: H - 80 - 19 }; })();
+  const walletY = 552 + 25;
+  const ty1Y = slotTop("m3") + 20;
+  $("threadIn").style.transformOrigin = `180px ${ty1Y}px`;
+
+  // ---------- touches ----------
+  const TAPS = [
+    { t: T.tapBanner, x: 196, y: BANNER.y + BANNER.h / 2 },
+    { t: T.tapSend, x: W - 12 - 6 - 17, y: H - 22 - 23 },
+    { t: T.tapYes, x: chipRect.x, y: chipRect.y },
+    { t: T.tapMail, x: 200, y: 152 + IB_H / 2 },
+    { t: T.tapWallet, x: 196, y: walletY },
+  ];
+  function renderTouch(t) {
+    const el = $("touch");
+    let o = 0, s = 1, x = 0, y = 0;
+    for (const tp of TAPS) {
+      const d = t - tp.t;
+      if (d < -0.1 || d > 0.42) continue;
+      x = tp.x; y = tp.y;
+      if (d < 0.02) { const p = clamp((d + 0.1) / 0.12); o = p; s = lerp(1.25, 1, ease.out(p)); }
+      else if (d < 0.14) { o = 1; s = 1; }
+      else { const p = clamp((d - 0.14) / 0.28); o = 1 - ease.soft(p); s = lerp(1, 1.4, ease.soft(p)); }
+    }
+    el.style.left = `${x}px`; el.style.top = `${y}px`;
+    set(el, { s, o });
+  }
+  const pressed = (t, tap, dur = 0.16) => clamp(1 - Math.abs(t - tap - dur / 2) / (dur / 2 + 0.06)); // 0..1 press depth
+
+  // ---------- scene 1: lock screen ----------
+  function renderLock(t) {
+    if (!show($("lock"), t < T.expand + 0.6)) return;
+    const wake = P(t, T.wake, 0.9, ease.soft);
+    set($("lockClock"), { s: lerp(1.05, 1, wake), y: lerp(6, 0, wake) });
+    const ex = P(t, T.expand, 0.5, ease.out);
+    set($("lockBg"), { s: lerp(1, 1.04, ex), o: 1 });
+    $("lockClock").style.opacity = 1 - ex;
+    const b = $("banner");
+    const x = t - T.bannerIn;
+    if (x <= 0) { b.style.opacity = 0; return; }
+    const k = spring(x, 17, 0.72);
+    const press = pressed(t, T.tapBanner);
+    set(b, { y: lerp(-26, 0, k), s: lerp(0.94, 1, k) * (1 - 0.025 * press), o: clamp(x / 0.18) * (1 - P(t, T.expand, 0.16, ease.lin)) });
+  }
+
+  // ---------- scenes 2 and 4: thread ----------
+  const typed = "yes, what do you have?";
+  function dots(el, t) {
+    [...el.children].forEach((d, i) => {
+      const ph = Math.sin(2 * Math.PI * (t / 0.95) - i * 0.75);
+      const k = Math.max(0, ph);
+      d.style.transform = `translateY(${-2.5 * k}px)`;
+      d.style.opacity = 0.35 + 0.65 * k;
+    });
+  }
+  function renderThread(t) {
+    const th = $("thread"), inn = $("threadIn");
+    const vis = (t >= T.expand && t < T.montageIn) || (t >= T.toThread && t < T.flip + T.flipDur + 0.02);
+    if (!show(th, vis)) return;
+
+    // Opening from the notification
+    const ex = P(t, T.expand, 0.5, ease.out);
+    if (t < T.expand + 0.55) {
+      const top = lerp(BANNER.y, 0, ex), left = lerp(BANNER.x, 0, ex);
+      const bottom = lerp(H - BANNER.y - BANNER.h, 0, ex), rad = lerp(24, 0, ex);
+      th.style.clipPath = `inset(${top}px ${left}px ${bottom}px ${left}px round ${rad}px)`;
+    } else th.style.clipPath = "none";
+
+    // Camera: slow push toward the typing dots, whip cut to the montage and back
+    const sc = lerp(0.94, 1, ex) * (t < T.toThread ? lerp(1, 1.04, P(t, T.push, 1.07, ease.inOut)) : 1);
+    if (t < T.toThread) whip(inn, "mb-thread", t, null, T.montageIn, { dOut: T.montageIn - T.toMontage, s: sc });
+    else whip(inn, "mb-thread", t, T.toThread, null, {});
+    inn.style.opacity = t < T.toThread ? P(t, T.expand + 0.02, 0.22, ease.lin) : 1;
+
+    // Composer
+    const typingNow = t >= T.typeStart - 0.15 && t < T.m2;
+    const n = t < T.m2 ? Math.round(clamp((t - T.typeStart) / (T.typeEnd - T.typeStart)) * typed.length) : 0;
+    $("cText").textContent = typed.slice(0, n);
+    show($("cPh"), n === 0);
+    const blinkOn = n > 0 && n < typed.length ? true : Math.floor((t - T.typeStart) * 2.2) % 2 === 0;
+    show($("cCaret"), typingNow && blinkOn);
+    const send = $("cSend");
+    send.style.opacity = n > 0 ? 1 : 0.35;
+    send.style.transform = `scale(${1 - 0.12 * pressed(t, T.tapSend, 0.12)})`;
+    if (n === 0) $("cPh").textContent = "Text message";
+
+    // Messages
+    $("m1").querySelector(".bubble").style.opacity = 1;
+    pop($("m2").querySelector(".bubble"), t, T.m2, { rise: 18 });
+    const ty1 = $("ty1");
+    if (t < T.m3) { pop(ty1, t, T.ty1); dots(ty1, t); } else unpop(ty1, t, T.m3 - 0.02);
+    pop($("m3").querySelector(".bubble"), t, T.m3);
+    pop($("m4").querySelector(".bubble"), t, T.m4, { rise: 18 });
+    const ty2 = $("ty2");
+    if (t < T.m5) { pop(ty2, t, T.ty2); dots(ty2, t); } else unpop(ty2, t, T.m5 - 0.02);
+    pop($("m5").querySelector(".bubble"), t, T.m5);
+
+    // Quick replies
+    const chips = $("chips");
+    if (show(chips, t >= T.chips && t < T.m4 + 0.2)) {
+      const pin = P(t, T.chips, 0.4, ease.out), pout = P(t, T.m4 - 0.05, 0.18, ease.in);
+      set(chips, { y: lerp(12, 0, pin) + 6 * pout, o: pin * (1 - pout) });
+      const pr = pressed(t, T.tapYes, 0.15);
+      $("chipYes").style.transform = `scale(${1 - 0.06 * pr})`;
+      $("chipYes").style.background = pr > 0 ? `rgba(0,113,227,${0.1 * pr})` : "";
+    }
+  }
+
+  // ---------- scene 3: Billett at work ----------
+  const scanEase = cubicBezier(0.5, 0.0, 0.18, 1);
+  const scrollAt = (t) => FILLER * ROW_H * scanEase(clamp((t - T.scanStart) / (T.scanEnd - T.scanStart)));
+  function renderMontage(t) {
+    const m = $("montage");
+    if (!show(m, t >= T.montageIn && t < T.toThread)) return;
+
+    // Label stays put while the shots whip past underneath it
+    const lab = $("mLabel");
+    pop(lab, t, T.montageIn + 0.08, { from: 0.8, rise: -6 });
+    const pulse = 0.5 + 0.5 * Math.cos(2 * Math.PI * (t / 0.9));
+    lab.querySelector("i").style.opacity = 0.45 + 0.55 * pulse;
+
+    // Shot A+B: split screen, listings on top, calendar below
+    const ab = $("shotAB");
+    if (show(ab, t < T.toC)) {
+      whip($("pList"), "mb-plist", t, T.montageIn, T.toC, { dist: 200 });
+      whip($("pCal"), "mb-pcal", t, T.montageIn, T.toC, { dist: 250, dIn: 0.56 });
+      renderList(t);
+      renderCal(t);
+    }
+
+    // Shot C: best value
+    const c = $("shotC");
+    if (whip(c, "mb-shotc", t, T.toC, T.toD)) {
+      // Content rides in with the card, lightly staggered, then the price ticks down.
+      const base = T.toC - 0.12;
+      pop($("cBadge"), t, base + 0.3, { from: 0.7, rise: 4 });
+      for (const [id, dt] of [["cSec", 0], ["cSub", 0.04], ["cPrice", 0.08], ["cUsual", 0.14], ["cTotal", 0.2]]) {
+        const p = P(t, base + dt, 0.5, ease.out);
+        set($(id), { y: lerp(18, 0, p), o: clamp(p * 1.5) });
+      }
+      const cp = P(t, T.toC + 0.12, 0.8, ease.soft);
+      $("cNum").textContent = `$${Math.round(lerp(140, 109, cp))}`;
+    }
+
+    // Shot D: Saturday is free
+    const d = $("shotD");
+    if (whip(d, "mb-shotd", t, T.toD, T.toThread)) {
+      const base = T.toD + 0.04;
+      const g = P(t, base + 0.18, 0.5, ease.out);
+      set($("dGame"), { sy: lerp(0.2, 1, g), o: clamp(g * 3) });
+      [...$("dGame").children].forEach((ch) => { if (ch.id !== "dFree") ch.style.opacity = P(t, base + 0.3, 0.3, ease.lin); });
+      pop($("dFree"), t, base + 0.55, { from: 0.5, rise: 4 });
+      set($("dBusy"), { o: P(t, base, 0.3, ease.lin) });
+    }
+  }
+
+  function renderList(t) {
+    // Scan bar and counter
+    const scan = clamp((t - T.scanStart) / (T.scanEnd - T.scanStart));
+    const bar = $("scanBar");
+    bar.style.opacity = 1 - P(t, T.scanEnd, 0.25, ease.lin);
+    bar.querySelector("i").style.transform = `scaleX(${scanEase(scan)})`;
+    let count = Math.round(148 * ease.soft(scan));
+    const steps = [[T.f1, 148, 61], [T.f2, 61, 17], [T.f3, 17, 3]];
+    for (const [ts, a, b] of steps) if (t >= ts) count = Math.round(lerp(a, b, P(t, ts, 0.22, ease.out)));
+    $("cnt").textContent = count;
+    $("cntLbl").textContent = t >= T.sort ? "matches" : "listings";
+
+    // Filter chips
+    [["f1", T.f1], ["f2", T.f2], ["f3", T.f3]].forEach(([id, ts]) => {
+      const el = $(id);
+      el.classList.toggle("on", t >= ts);
+      const k = t >= ts ? spring(t - ts, 26, 0.5) : 0;
+      el.style.transform = `scale(${t >= ts ? lerp(0.9, 1, k) : 1})`;
+    });
+
+    // Rows: scroll fast (with vertical motion blur), then filter and rank
+    const s = scrollAt(t), s0 = scrollAt(t - 1 / 60);
+    const v = Math.abs(s - s0) * 60;
+    blur($("list"), "mb-rows", Math.min(4, v / 380));
+    // Rank: matches sorted by price rise to the top; ruled-out rows sink, dimmed.
+    const srt = P(t, T.sort, 0.45, ease.out);
+    const finals = rows.slice(FILLER);
+    const ranked = [...finals.filter((r) => !r.d.fail).sort((a, b) => a.d.price - b.d.price), ...finals.filter((r) => r.d.fail)];
+    const yRank = new Map(ranked.map((r, i) => [r, i * ROW_H]));
+    for (const r of rows) {
+      let y = r.i * ROW_H - s;
+      let o = 1, sc = 1;
+      if (r.i >= FILLER) {
+        y = lerp(r.i * ROW_H - s, yRank.get(r), srt);
+        if (r.d.fail) {
+          const ft = [0, T.f1, T.f2, T.f3][r.d.fail];
+          const dim = P(t, ft, 0.18, ease.out);
+          o = lerp(1, 0.32, dim);
+          r.strike.style.transform = `scaleX(${dim})`;
+        }
+        if (r.d.best) {
+          const hb = P(t, T.best, 0.3, ease.out);
+          r.hl.style.opacity = hb;
+          if (t >= T.best) pop(r.tag, t, T.best + 0.04, { from: 0.4, rise: 0 }); else r.tag.style.opacity = 0;
+        }
+      }
+      const vis = y > -ROW_H && y < 276 + ROW_H && o > 0.01;
+      if (!show(r.el, vis)) continue;
+      r.el.style.zIndex = r.d.best ? 3 : r.d.fail ? 1 : 2;
+      set(r.el, { y, o, sy: sc, sx: 1 });
+    }
+  }
+
+  function renderCal(t) {
+    const k = (t - T.sweep0) / T.sweepStep;
+    const idx = clamp(Math.floor(k), 0, 5);
+    const frac = clamp(k - Math.floor(k));
+    const pos = k < 0 ? 0 : k >= 5 ? 5 : idx + ease.out(clamp(frac / 0.6));
+    const sw = calEls.sweep;
+    sw.style.left = `${CAL.left + pos * CAL.colW}px`;
+    sw.style.opacity = P(t, T.sweep0 - 0.15, 0.2, ease.lin);
+    const cur = k < 0 ? -1 : Math.round(clamp(pos, 0, 5));
+    calEls.days.forEach((d, i) => d.classList.toggle("on", i === cur));
+    const f = calEls.free;
+    const x = t - T.free;
+    if (x <= 0) { f.style.opacity = 0; return; }
+    const g = P(t, T.free, 0.4, ease.out);
+    set(f, { sy: lerp(0.15, 1, g), o: clamp(x / 0.1) });
+  }
+
+  // ---------- scene 5: turn to the inbox, open the tickets ----------
+  function renderCube(t) {
+    const cube = $("cube");
+    const vis = (t >= T.expand && t < T.montageIn) || (t >= T.toThread && t < T.toEnd + 0.5);
+    if (!show(cube, vis)) return;
+    const inFlip = t >= T.flip && t < T.flip + T.flipDur;
+    cube.style.background = inFlip ? "var(--bg-alt)" : t >= T.toEnd ? "#fff" : "transparent";
+    const th = $("thread"), ma = $("mailapp");
+    const p = P(t, T.flip, T.flipDur, ease.inOut);
+    const p0 = P(t - 1 / 60, T.flip, T.flipDur, ease.inOut);
+    const ang = -90 * p;
+    const half = W / 2;
+    const dip = Math.sin(Math.PI * p) * 0.08;
+    if (t >= T.flip) {
+      th.style.transform = `scale(${1 - dip}) translateZ(${-half}px) rotateY(${ang}deg) translateZ(${half}px)`;
+      ma.style.transform = `scale(${1 - dip}) translateZ(${-half}px) rotateY(${ang + 90}deg) translateZ(${half}px)`;
+    } else { th.style.transform = "none"; ma.style.transform = "none"; }
+    const hb = Math.min(2.5, Math.abs(p - p0) * 90 * 60 / 120);
+    blur(ma, "mb-mail", inFlip ? hb : 0, "x");
+    if (!show(ma, t >= T.flip)) return;
+    renderMail(t);
+  }
+
+  function renderMail(t) {
+    const ma = $("mailapp");
+    // Leave for the end card
+    const pe = P(t, T.toEnd, 0.45, ease.out);
+    if (t >= T.toEnd) { ma.style.transform = `scale(${lerp(1, 0.94, pe)})`; }
+    ma.style.opacity = 1 - P(t, T.toEnd, 0.3, ease.lin);
+
+    // New message slides in at the top; the rest shift down
+    const nm = P(t, T.newMail, 0.5, ease.out);
+    const nr = $("newRow");
+    set(nr, { y: lerp(-IB_H, 0, nm), o: clamp((t - T.newMail) / 0.15) });
+    nr.querySelector(".glow").style.opacity = 1 - P(t, T.newMail + 0.6, 0.6, ease.lin);
+    nr.querySelector(".press").style.opacity = pressed(t, T.tapMail, 0.18);
+    ibRows.forEach((el, i) => set(el, { y: (i + nm) * IB_H }));
+
+    // Push to the message
+    const pp = P(t, T.push2, 0.45, ease.out);
+    set($("inbox"), { x: -90 * pp });
+    $("inboxDim").style.opacity = 0.06 * pp;
+    const mv = $("mailview");
+    if (!show(mv, t >= T.push2)) return;
+    set(mv, { x: W * (1 - pp) });
+
+    // Tickets arrive
+    [["tk1", 0], ["tk2", 0.1]].forEach(([id, dt]) => {
+      const el = $(id), x = t - T.tickets - dt;
+      if (x <= 0) { el.style.opacity = 0; return; }
+      const k = spring(x, 18, 0.7);
+      set(el, { y: lerp(26, 0, k), s: lerp(0.94, 1, k), o: clamp(x / 0.15) });
+    });
+    const wp = P(t, T.tickets + 0.28, 0.5, ease.out);
+    const wl = $("wallet");
+    const pr = pressed(t, T.tapWallet, 0.14);
+    set(wl, { y: lerp(14, 0, wp), o: wp, s: 1 - 0.03 * pr });
+    const done = P(t, T.added, 0.25, ease.out);
+    $("wAdd").style.opacity = 1 - done;
+    set($("wDone"), { o: done, s: lerp(0.85, 1, spring(t - T.added, 24, 0.6)) });
+    $("mvFoot").style.opacity = P(t, T.tickets + 0.4, 0.4, ease.lin);
+  }
+
+  // ---------- scene 6: end card ----------
+  function renderEnd(t) {
+    const e = $("end");
+    if (!show(e, t >= T.toEnd + 0.05)) return;
+    e.style.opacity = P(t, T.toEnd + 0.05, 0.35, ease.lin);
+    pop($("eIcon"), t, T.endIcon, { from: 0.6, rise: 10 });
+    for (const [id, ts, d] of [["eWord", T.endWord, 0.7], ["eTag", T.endTag, 0.75]]) {
+      const p = P(t, ts, d, ease.out);
+      set($(id), { y: lerp(18, 0, p), o: clamp(p * 1.4) });
+    }
+    const hp = P(t, T.endHint, 0.6, ease.out);
+    set($("eHint"), { y: lerp(10, 0, hp), o: hp });
+    const bob = Math.max(0, Math.sin(2 * Math.PI * (t - T.endHint) / 1.3));
+    $("eHint").querySelector("svg").style.transform = `translateY(${3 * bob}px)`;
+  }
+
+  function renderStatus(t) {
+    const s = $("status");
+    let o = 1;
+    o *= P(t, T.wake + 0.1, 0.4, ease.lin);
+    o *= 1 - P(t, T.toEnd, 0.3, ease.lin);
+    const inFlip = t >= T.flip && t < T.flip + T.flipDur;
+    if (inFlip) o *= Math.abs(Math.cos(Math.PI * clamp((t - T.flip) / T.flipDur)));
+    s.style.opacity = o;
+    $("sbTime").style.opacity = t < T.expand ? 0 : P(t, T.expand + 0.25, 0.2, ease.lin);
+  }
+
+  function renderBlack(t) {
+    let o = 1 - P(t, T.wake, 0.55, ease.soft);
+    o = Math.max(o, P(t, T.sleep, 0.5, ease.inOut));
+    $("black").style.opacity = o;
+  }
+
+  window.DURATION = 30;
+  window.renderAt = function renderAt(t) {
+    renderLock(t);
+    renderCube(t);
+    renderThread(t);
+    renderMontage(t);
+    renderEnd(t);
+    renderStatus(t);
+    renderTouch(t);
+    renderBlack(t);
+  };
+  window.renderAt(0);
+  window.sceneReady = true;
+})();
+</script>
+</body>
+</html>

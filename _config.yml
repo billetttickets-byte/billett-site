@@ -1,0 +1,3 @@
+# GitHub Pages: publish the page and its media only. The video source (video-src/) stays in the repo.
+exclude:
+  - video-src
