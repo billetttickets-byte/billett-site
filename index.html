@@ -43,15 +43,6 @@
     margin-bottom: 20px;
     color: var(--ink);
   }
-  .lede {
-    font-size: clamp(21px, 2.4vw, 28px);
-    line-height: 1.25;
-    font-weight: 400;
-    color: var(--muted);
-    max-width: 680px;
-    margin: 0 auto;
-    letter-spacing: 0.004em;
-  }
 
   /* Demo: the video in a black phone frame at every width. The waitlist sits under the video
      and its caption on wider screens, and above the video on phones (see the 480px query). */
@@ -115,17 +106,6 @@
   .play[hidden] { display: none; }
   .play svg { width: 20px; height: 20px; }
   .play:focus-visible { outline: 3px solid rgba(0, 113, 227, 0.5); outline-offset: 3px; }
-  .demo-alt {
-    width: 100%;
-    max-width: 460px;
-    margin: 16px auto 0;
-    text-align: center;
-    font-size: 14px;
-    line-height: 1.43;
-    letter-spacing: -0.01em;
-    color: var(--muted);
-    text-wrap: balance;
-  }
   .stills { display: none; list-style: none; }
   .stills li { text-align: center; font-size: 15px; line-height: 1.35; color: var(--muted); }
   .stills img {
@@ -144,7 +124,7 @@
   /* How it works: one step per row, a big blue number on the left. */
   .how { padding-top: 96px; padding-bottom: 128px; }
   .steps { list-style: none; margin: 0 auto; padding: 0; max-width: 600px; display: grid; gap: 64px; }
-  .step { display: grid; grid-template-columns: 84px 1fr; column-gap: 28px; align-items: start; }
+  .step { display: grid; grid-template-columns: 84px 1fr; column-gap: 28px; align-items: center; }
   .step-num {
     font-size: 64px;
     font-weight: 700;
@@ -152,7 +132,7 @@
     letter-spacing: -0.04em;
     color: var(--blue);
     font-variant-numeric: tabular-nums;
-    /* Lines the top of the digit up with the top of the title's capitals. */
+    /* Optical nudge: digits have no descenders, so the box centers them a little high. */
     padding-top: 3px;
   }
   .step h2 {
@@ -288,7 +268,6 @@
     .hero { padding-top: 40px; padding-bottom: 32px; }
     .demo { padding: 0 0 16px; }
     .stills { grid-template-columns: 1fr; max-width: 280px; gap: 32px; }
-    .demo-alt { font-size: 13px; text-wrap: wrap; }
     .how { padding-top: 64px; padding-bottom: 88px; }
     .steps { gap: 44px; }
   }
@@ -296,7 +275,7 @@
      30% smaller (262px wide instead of 346px), with the same frame scaled to match. */
   @media (max-width: 480px) {
     .step { grid-template-columns: 46px 1fr; column-gap: 16px; }
-    .step-num { font-size: 50px; padding-top: 2px; }
+    .step-num { font-size: 50px; }
     .step h2 { font-size: 20px; margin-bottom: 6px; }
     .step p { font-size: 16px; }
     .hero { padding-bottom: 0; }
@@ -324,7 +303,6 @@
   <main>
     <section class="hero wrap">
       <h1>Your ticket concierge, by text.</h1>
-      <p class="lede">Billett watches ticket prices for your favorite teams, artists, and shows. When great seats drop on a night you're free, it texts you. Reply YES and it's booked.</p>
     </section>
 
     <section class="demo" aria-label="See Billett in action">
@@ -348,8 +326,6 @@
           <li><img src="media/demo-2-booked.webp" width="720" height="1560" loading="lazy" alt="The chat: Billett found 2 seats in Section 214, Row 6 for $218 all-in. You reply YES, and Billett answers: Booked, tickets are in your email."><span>Reply YES. It's booked.</span></li>
           <li><img src="media/demo-3-tickets.webp" width="720" height="1560" loading="lazy" alt="An email titled Your tickets: Warriors vs Celtics, with 2 tickets that have QR codes and an Add to Wallet button."><span>Your tickets arrive by email.</span></li>
         </ol>
-
-        <p class="demo-alt">In the demo: Billett texts a deal, checks seats and your calendar, books on YES, and emails your tickets.</p>
 
         <div class="join-slot">
       <form class="join" id="join" autocomplete="on" novalidate>
