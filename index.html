@@ -141,22 +141,35 @@
     .phone { display: none; }
     .stills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; max-width: 760px; margin: 0 auto; }
   }
-  .how {
-    padding-top: 96px;
-    padding-bottom: 120px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
+  /* How it works: one step per row, a big blue number on the left. */
+  .how { padding-top: 96px; padding-bottom: 128px; }
+  .steps { list-style: none; margin: 0 auto; padding: 0; max-width: 600px; display: grid; gap: 64px; }
+  .step { display: grid; grid-template-columns: 84px 1fr; column-gap: 28px; align-items: start; }
+  .step-num {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 0.82;
+    letter-spacing: -0.04em;
+    color: var(--blue);
+    font-variant-numeric: tabular-nums;
+    /* Lines the top of the digit up with the top of the title's capitals. */
+    padding-top: 3px;
   }
-  .how h2 {
-    font-weight: 600;
+  .step h2 {
+    font-weight: 700;
     font-size: 24px;
     line-height: 1.17;
     letter-spacing: 0.009em;
-    margin-bottom: 10px;
+    color: var(--ink);
+    margin: 0 0 10px;
   }
-  .how p { color: var(--muted); font-size: 17px; }
-  .step-num { font-size: 14px; font-weight: 600; color: var(--blue); margin-bottom: 8px; }
+  .step p { color: var(--muted); font-size: 17px; line-height: 1.47; letter-spacing: -0.022em; max-width: 32ch; margin: 0; }
+  /* A subtle fade-in as each step scrolls into view (only once the script has set it up). */
+  .steps.fade .step { opacity: 0; transform: translateY(14px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .steps.fade .step.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .steps.fade .step { opacity: 1; transform: none; transition: none; }
+  }
 
   /* waitlist pill */
   .join { margin: 28px auto 0; max-width: 420px; }
@@ -276,11 +289,16 @@
     .demo { padding: 0 0 16px; }
     .stills { grid-template-columns: 1fr; max-width: 280px; gap: 32px; }
     .demo-alt { font-size: 13px; text-wrap: wrap; }
-    .how { grid-template-columns: 1fr; gap: 36px; padding-top: 64px; padding-bottom: 80px; }
+    .how { padding-top: 64px; padding-bottom: 88px; }
+    .steps { gap: 44px; }
   }
   /* Phones: the waitlist field moves above the video (first screen) and the phone is about
      30% smaller (262px wide instead of 346px), with the same frame scaled to match. */
   @media (max-width: 480px) {
+    .step { grid-template-columns: 46px 1fr; column-gap: 16px; }
+    .step-num { font-size: 50px; padding-top: 2px; }
+    .step h2 { font-size: 20px; margin-bottom: 6px; }
+    .step p { font-size: 16px; }
     .hero { padding-bottom: 0; }
     .join-slot { order: -1; }
     .phone {
@@ -347,22 +365,30 @@
       </div>
     </section>
 
-    <section class="how wrap">
-      <div>
-        <p class="step-num">01</p>
-        <h2>Tell it what you love.</h2>
-        <p>Your teams, artists, comedians, and shows, plus how many seats you usually need.</p>
-      </div>
-      <div>
-        <p class="step-num">02</p>
-        <h2>It watches the market.</h2>
-        <p>Billett tracks resale prices and texts when a deal fits your calendar.</p>
-      </div>
-      <div>
-        <p class="step-num">03</p>
-        <h2>Reply YES.</h2>
-        <p>Billett books one all-in price, transfers the tickets, and adds the event to your calendar.</p>
-      </div>
+    <section class="how wrap" aria-label="How Billett works">
+      <ol class="steps" id="steps" role="list">
+        <li class="step">
+          <span class="step-num" aria-hidden="true">1</span>
+          <div>
+            <h2>Connect yourself</h2>
+            <p>Tell Billett about your favorite teams, artists, and more. Then connect your calendar and payment method.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num" aria-hidden="true">2</span>
+          <div>
+            <h2>Billett works for you</h2>
+            <p>Billett constantly tracks events you might be interested in. If a good deal pops up on a night you're free, it'll let you know.</p>
+          </div>
+        </li>
+        <li class="step">
+          <span class="step-num" aria-hidden="true">3</span>
+          <div>
+            <h2>Text end-to-end</h2>
+            <p>From the deal alert to choosing your seats to checking out, it all happens in iMessage, and your tickets are emailed to you.</p>
+          </div>
+        </li>
+      </ol>
     </section>
   </main>
 
@@ -582,6 +608,22 @@
       return;
     }
     watch();
+  })();
+</script>
+<script>
+  // How it works: each step fades in as it scrolls into view (skipped under reduced motion).
+  (function () {
+    const steps = document.getElementById("steps");
+    if (!steps || !("IntersectionObserver" in window) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    steps.classList.add("fade");
+    const seen = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("in");
+        seen.unobserve(entry.target);
+      }
+    }, { rootMargin: "0px 0px -10% 0px", threshold: 0.2 });
+    steps.querySelectorAll(".step").forEach((step) => seen.observe(step));
   })();
 </script>
 </body>
