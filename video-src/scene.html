@@ -9,6 +9,11 @@
   The site never loads this file. Everything on screen is a pure function of time:
   window.renderAt(seconds) draws the frame for that moment (0 to 30 s).
   render.js steps through it frame by frame and encodes the result. See render.js.
+
+  "Billett in the Background" (T.backstage to T.backstageEnd, 7.52 to 13.72 s, back by 14.12 s):
+  this screen holds on the thread with Billett typing. The site (index.html) steps the phone
+  back to 70% on the same clock and shows the listings scan and the calendar check beside it,
+  so the video only has to keep the user's screen as it is.
 -->
 <style>
   @font-face {
@@ -131,94 +136,6 @@
   #cSend { flex: none; margin-left: auto; width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; }
   #cSend svg { width: 16px; height: 16px; }
 
-  /* Scene 3: Billett at work */
-  #montage { background: var(--bg-alt); }
-  #mLabel {
-    position: absolute; top: 52px; left: 0; right: 0; margin: 0 auto; width: fit-content;
-    display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px 0 12px; border-radius: 999px;
-    background: var(--bg); font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
-    box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.18);
-  }
-  #mLabel i { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
-  .shot { position: absolute; inset: 0; }
-  .panel { position: absolute; left: 12px; right: 12px; background: var(--bg); border-radius: 22px; box-shadow: 0 14px 34px -22px rgba(0, 0, 0, 0.3); overflow: hidden; }
-  #pList { top: 98px; height: 386px; }
-  #pCal { top: 496px; height: 266px; }
-  .p-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 16px 0; }
-  .p-title { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
-  .p-sub { font-size: 13px; color: var(--muted); letter-spacing: 0; margin-top: 2px; }
-  .p-count { text-align: right; line-height: 1.1; }
-  .p-count b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-  .p-count small { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 1px; }
-  #scanBar { position: absolute; left: 16px; right: 16px; top: 64px; height: 3px; border-radius: 2px; background: #ececf0; overflow: hidden; }
-  #scanBar i { display: block; height: 100%; width: 100%; background: var(--blue); transform-origin: 0 50%; }
-  .filters { position: absolute; left: 16px; right: 16px; top: 74px; display: flex; justify-content: space-between; }
-  .f {
-    flex: none; display: flex; align-items: center; gap: 3px; height: 28px; padding: 0 10px 0 8px; border-radius: 999px; white-space: nowrap;
-    border: 1px solid var(--line); font-size: 12.5px; font-weight: 500; letter-spacing: -0.005em; color: var(--muted); background: var(--bg);
-  }
-  .f svg { width: 11px; height: 11px; }
-  .f.on { background: var(--blue); border-color: var(--blue); color: #fff; }
-  .list-win { position: absolute; left: 0; right: 0; top: 110px; height: 276px; overflow: hidden; border-top: 1px solid var(--hair); }
-  .row {
-    position: absolute; left: 0; right: 0; height: 46px; display: flex; align-items: center; justify-content: space-between;
-    padding: 0 16px; border-bottom: 1px solid var(--hair); background: var(--bg);
-  }
-  .row .sec { font-size: 15px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.2; }
-  .row .meta { font-size: 12px; color: var(--muted); letter-spacing: 0; line-height: 1.25; }
-  .row .price { position: relative; font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
-  .row .price small { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
-  .row .strike { position: absolute; left: -2px; top: 50%; height: 1.5px; width: calc(100% + 4px); background: var(--ink); transform-origin: 0 50%; }
-  .row .tag { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 600; letter-spacing: 0; margin-left: 6px; vertical-align: 1px; transform-origin: 0 50%; }
-  .row .hl { position: absolute; inset: 0; background: rgba(0, 113, 227, 0.07); }
-  .row .hl::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--blue); }
-  .row > div { position: relative; }
-
-  .cal { position: absolute; left: 14px; right: 14px; top: 58px; height: 196px; }
-  .cal .dayh { position: absolute; top: 0; height: 18px; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
-  .cal .dayh.on { color: var(--blue); font-weight: 700; }
-  .cal .hr { position: absolute; left: 34px; right: 0; height: 1px; background: var(--hair); }
-  .cal .hl { position: absolute; left: 0; width: 32px; font-size: 10px; color: var(--muted); letter-spacing: 0; transform: translateY(-50%); }
-  .cal .busy { position: absolute; border-radius: 6px; background: var(--bubble-in); }
-  .cal .sweep { position: absolute; top: 20px; height: 176px; border-radius: 8px; background: rgba(0, 113, 227, 0.07); }
-  .cal .free {
-    position: absolute; border-radius: 7px; border: 1.5px solid var(--blue); background: #e6f1fc;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transform-origin: 50% 0;
-    color: var(--blue); font-size: 11px; font-weight: 700; letter-spacing: 0;
-  }
-  .ckc { width: 16px; height: 16px; }
-
-  .bigcard { position: absolute; left: 20px; right: 20px; background: var(--bg); border-radius: 28px; box-shadow: 0 26px 50px -30px rgba(0, 0, 0, 0.32); padding: 26px 24px 24px; }
-  #cardC { top: 196px; }
-  .badge { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 13px; font-weight: 600; letter-spacing: 0; }
-  .c-sec { font-size: 32px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.1; margin-top: 18px; }
-  .c-sub { font-size: 15px; color: var(--muted); margin-top: 6px; letter-spacing: -0.005em; }
-  .c-price { display: flex; align-items: baseline; gap: 4px; margin-top: 20px; }
-  .c-price b { font-size: 76px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
-  .c-price span { font-size: 21px; color: var(--muted); font-weight: 500; letter-spacing: -0.01em; }
-  .c-usual { font-size: 15px; color: var(--muted); margin-top: 8px; letter-spacing: -0.005em; }
-  .c-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--hair); font-size: 16px; }
-  .c-total span { color: var(--muted); }
-  .c-total b { font-weight: 600; }
-
-  #cardD { top: 150px; }
-  .d-day { font-size: 32px; font-weight: 700; letter-spacing: -0.028em; line-height: 1.1; }
-  .d-sub { font-size: 15px; color: var(--muted); margin-top: 4px; letter-spacing: -0.005em; }
-  .tl { position: relative; height: 330px; margin-top: 22px; }
-  .tl .hr { position: absolute; left: 50px; right: 0; height: 1px; background: var(--hair); }
-  .tl .lbl { position: absolute; left: 0; width: 46px; font-size: 12px; color: var(--muted); letter-spacing: 0; transform: translateY(-50%); }
-  .tl .blk { position: absolute; left: 56px; right: 0; border-radius: 12px; padding: 10px 12px; overflow: hidden; }
-  .tl .blk.busy { background: #f0f0f2; color: var(--muted); font-size: 14px; }
-  .tl .blk.game { background: #e6f1fc; transform-origin: 50% 0; }
-  .tl .blk.game::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--blue); }
-  .tl .g-title { font-size: 16px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.2; }
-  .tl .g-time { font-size: 13px; color: var(--muted); margin-top: 2px; letter-spacing: 0; }
-  .freechip {
-    position: absolute; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px 0 10px;
-    border-radius: 999px; background: var(--blue); color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; transform-origin: 100% 100%;
-  }
-  .freechip svg { width: 14px; height: 14px; }
-
   /* Scene 5: inbox and message */
   #mailapp { background: var(--bg); }
   #inbox { position: absolute; inset: 0; background: var(--bg); }
@@ -287,12 +204,6 @@
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <!-- One directional blur per moving element; renderAt sets the amount from its velocity. -->
-    <filter id="mb-thread" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
-    <filter id="mb-plist" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
-    <filter id="mb-pcal" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
-    <filter id="mb-shotc" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
-    <filter id="mb-shotd" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
-    <filter id="mb-rows" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="0 0"/></filter>
     <filter id="mb-mail" x="-20%" y="-5%" width="140%" height="110%"><feGaussianBlur stdDeviation="0 0"/></filter>
     <symbol id="ticket" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5" fill="#fff"/><circle cx="2" cy="12" r="2.6" fill="#0071e3"/><circle cx="22" cy="12" r="2.6" fill="#0071e3"/></symbol>
     <symbol id="check" viewBox="0 0 12 12"><path d="M2.4 6.3 4.9 8.7 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -383,57 +294,6 @@
         <div class="mv-foot" id="mvFoot">Paid $218 all-in for 2 tickets</div>
       </div>
     </div>
-  </div>
-
-  <!-- Scene 3: Billett at work -->
-  <div id="montage" class="layer">
-    <div class="shot" id="shotAB">
-      <div class="panel" id="pList">
-        <div class="p-head">
-          <div><div class="p-title">Warriors vs Celtics</div><div class="p-sub">Sat 7:30 PM · 2 seats</div></div>
-          <div class="p-count"><b class="tnum" id="cnt">148</b><small id="cntLbl">listings</small></div>
-        </div>
-        <div id="scanBar"><i></i></div>
-        <div class="filters">
-          <span class="f" id="f1"><svg><use href="#check"/></svg>2 together</span>
-          <span class="f" id="f2"><svg><use href="#check"/></svg>Clear view</span>
-          <span class="f" id="f3"><svg><use href="#check"/></svg>Under $140</span>
-        </div>
-        <div class="list-win"><div id="list"></div></div>
-      </div>
-      <div class="panel" id="pCal">
-        <div class="p-head"><div><div class="p-title">Your week</div><div class="p-sub">Evenings</div></div></div>
-        <div class="cal" id="cal"></div>
-      </div>
-    </div>
-
-    <div class="shot" id="shotC">
-      <div class="bigcard" id="cardC">
-        <span class="badge" id="cBadge">Best value</span>
-        <div class="c-sec" id="cSec">Sec 214 · Row 6</div>
-        <div class="c-sub" id="cSub">2 seats together · Clear view</div>
-        <div class="c-price" id="cPrice"><b class="tnum" id="cNum">$109</b><span>/seat</span></div>
-        <div class="c-usual" id="cUsual">Usually ~$140</div>
-        <div class="c-total" id="cTotal"><span>All-in for 2</span><b>$218</b></div>
-      </div>
-    </div>
-
-    <div class="shot" id="shotD">
-      <div class="bigcard" id="cardD">
-        <div class="d-day">Saturday</div>
-        <div class="d-sub">Your calendar</div>
-        <div class="tl" id="tl">
-          <div class="blk busy" id="dBusy" style="top:3px;height:48px">Busy</div>
-          <div class="blk game" id="dGame" style="top:138px;height:129px">
-            <div class="g-title">Warriors vs Celtics</div>
-            <div class="g-time">7:30 PM</div>
-            <div class="freechip" id="dFree"><svg><use href="#check"/></svg>Free</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="mLabel"><i></i>Billett at work</div>
   </div>
 
   <!-- Scene 6: end card -->
@@ -539,34 +399,14 @@
     const p = P(t, t0, d, ease.in);
     set(el, { s: lerp(1, 0.6, p), o: 1 - p });
   }
-  // Whip cuts: a shot is on screen for [tIn, tOut). It arrives moving up from below
-  // (fast in, soft out) and leaves by accelerating upward, so consecutive shots meet at
-  // the cut in one continuous upward motion. Vertical motion blur follows the velocity.
-  function whipY(t, tIn, tOut, dIn, dOut, dist) {
-    let y = 0;
-    if (tIn != null && t < tIn + dIn) y += dist * (1 - ease.out(clamp((t - tIn) / dIn)));
-    if (tOut != null && t > tOut - dOut) y -= dist * ease.in(clamp((t - tOut + dOut) / dOut));
-    return y;
-  }
-  function whip(el, filterId, t, tIn, tOut, { dIn = 0.5, dOut = 0.2, dist = 220, s = 1 } = {}) {
-    const vis = (tIn == null || t >= tIn) && (tOut == null || t < tOut);
-    if (!show(el, vis)) return false;
-    const y = whipY(t, tIn, tOut, dIn, dOut, dist);
-    const v = Math.abs(y - whipY(t - 1 / 60, tIn, tOut, dIn, dOut, dist)) * 60; // px/s
-    set(el, { y, s, o: 1 });
-    blur(el, filterId, Math.min(5, v / 320));
-    return true;
-  }
-
   // ---------- timeline (seconds) ----------
   const T = {
     tapBanner: 2.9, expand: 3.05,
     tapField: 3.72, typeStart: 3.95, typeEnd: 4.7, tapSend: 4.88, m2: 4.98, ty1: 5.42,
-    push: 6.45, toMontage: 7.52,
-    montageIn: 7.72, scanStart: 7.85, scanEnd: 9.3,
-    f1: 9.35, f2: 9.55, f3: 9.75, sort: 9.98, best: 10.32,
-    sweep0: 8.2, sweepStep: 0.17, free: 9.3,
-    toC: 10.85, toD: 12.2, toThread: 13.72,
+    push: 6.45,
+    // Billett in the Background: the site shrinks the phone from 7.52 s and brings it back
+    // from 13.72 s (over 0.4 s); the reply lands at 14.12 s.
+    backstage: 7.52, backstageEnd: 13.72,
     m3: 14.12, chips: 15.05, tapYes: 15.75, m4: 15.9, ty2: 16.35, m5: 17.25,
     flip: 18.95, flipDur: 0.62,
     newMail: 19.85, tapMail: 20.9, push2: 21.05,
@@ -577,83 +417,7 @@
     loopOut: 29.0, loopBanner: 29.42,
   };
 
-  // ---------- build: listings, calendar, inbox rows, QR codes ----------
-  const ROW_H = 46;
-  const FINAL = [ // the six rows the scan stops on
-    { sec: "Sec 107 · Row 18", meta: "1 seat", price: 98, fail: 1 },
-    { sec: "Sec 218 · Row 3", meta: "2 seats together", price: 124 },
-    { sec: "Sec 214 · Row 6", meta: "2 seats together", price: 109, best: true },
-    { sec: "Sec 203 · Row 11", meta: "2 seats · limited view", price: 104, fail: 2 },
-    { sec: "Sec 212 · Row 9", meta: "2 seats together", price: 131 },
-    { sec: "Sec 120 · Row 2", meta: "2 seats together", price: 152, fail: 3 },
-  ];
-  const FILLER = 24;
-  const rows = [];
-  (function buildList() {
-    const r = rng(7);
-    const list = $("list");
-    const metas = ["2 seats together", "4 seats", "2 seats together", "3 seats", "2 seats · aisle", "1 seat"];
-    const all = [];
-    for (let i = 0; i < FILLER; i++) {
-      const lower = r() < 0.35;
-      const sec = lower ? 101 + Math.floor(r() * 24) : 201 + Math.floor(r() * 24);
-      const row = 1 + Math.floor(r() * (lower ? 22 : 14));
-      const price = lower ? 168 + Math.floor(r() * 140) : 114 + Math.floor(r() * 70);
-      all.push({ sec: `Sec ${sec} · Row ${row}`, meta: metas[Math.floor(r() * metas.length)], price });
-    }
-    all.push(...FINAL);
-    all.forEach((d, i) => {
-      const el = document.createElement("div");
-      el.className = "row";
-      el.innerHTML = `${d.best ? '<span class="hl"></span>' : ""}<div><div class="sec">${d.sec}${d.best ? '<span class="tag">Best value</span>' : ""}</div><div class="meta">${d.meta}</div></div>` +
-        `<div class="price tnum">$${d.price}<small>/seat</small>${d.fail ? '<span class="strike"></span>' : ""}</div>`;
-      list.appendChild(el);
-      rows.push({ el, d, i, hl: el.querySelector(".hl"), tag: el.querySelector(".tag"), strike: el.querySelector(".strike") });
-    });
-  })();
-
-  const CAL = { left: 34, width: 308, top: 20, hourH: 34, start: 17 };
-  CAL.colW = (CAL.width - CAL.left) / 7;
-  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const BUSY = [[0, 18, 19.5], [1, 17, 18.5], [1, 19.5, 21], [2, 18.5, 20.5], [3, 17.5, 19], [4, 19, 22], [5, 17, 18], [6, 18, 21]];
-  const calEls = { days: [] };
-  (function buildCal() {
-    const cal = $("cal");
-    const sweep = document.createElement("div");
-    sweep.className = "sweep"; sweep.style.width = `${CAL.colW}px`;
-    cal.appendChild(sweep); calEls.sweep = sweep;
-    DAYS.forEach((d, i) => {
-      const el = document.createElement("div");
-      el.className = "dayh"; el.textContent = d;
-      el.style.left = `${CAL.left + i * CAL.colW}px`; el.style.width = `${CAL.colW}px`;
-      cal.appendChild(el); calEls.days.push(el);
-    });
-    for (let h = 0; h <= 5; h++) {
-      const y = CAL.top + h * CAL.hourH;
-      const line = document.createElement("div"); line.className = "hr"; line.style.top = `${y}px`; cal.appendChild(line);
-      if (h < 5) { const l = document.createElement("div"); l.className = "hl"; l.style.top = `${y}px`; l.textContent = `${5 + h} PM`; cal.appendChild(l); }
-    }
-    BUSY.forEach(([d, a, b]) => {
-      const el = document.createElement("div"); el.className = "busy";
-      el.style.left = `${CAL.left + d * CAL.colW + 2.5}px`; el.style.width = `${CAL.colW - 5}px`;
-      el.style.top = `${CAL.top + (a - CAL.start) * CAL.hourH + 1.5}px`;
-      el.style.height = `${Math.min(b - a, 22 - a) * CAL.hourH - 3}px`;
-      cal.appendChild(el);
-    });
-    const free = document.createElement("div"); free.className = "free";
-    free.style.left = `${CAL.left + 5 * CAL.colW + 2}px`; free.style.width = `${CAL.colW - 4}px`;
-    free.style.top = `${CAL.top + 2.5 * CAL.hourH + 1.5}px`; free.style.height = `${2.5 * CAL.hourH - 3}px`;
-    free.innerHTML = '<svg class="ckc" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="#0071e3"/><path d="M4.6 8.3 7 10.6 11.4 5.7" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Free';
-    cal.appendChild(free); calEls.free = free;
-    // Saturday timeline (shot D) hour lines
-    const tl = $("tl");
-    for (let h = 0; h <= 6; h++) {
-      const y = h * 54;
-      const line = document.createElement("div"); line.className = "hr"; line.style.top = `${y}px`; tl.insertBefore(line, tl.firstChild);
-      const l = document.createElement("div"); l.className = "lbl"; l.style.top = `${y}px`; l.textContent = `${5 + h} PM`; tl.insertBefore(l, tl.firstChild);
-    }
-  })();
-
+  // ---------- build: inbox rows, QR codes ----------
   const IB_H = 88;
   const ibRows = [];
   (function buildInbox() {
@@ -778,8 +542,7 @@
   }
   function renderThread(t) {
     const th = $("thread"), inn = $("threadIn");
-    const vis = (t >= T.expand && t < T.montageIn) || (t >= T.toThread && t < T.flip + T.flipDur + 0.02);
-    if (!show(th, vis)) return;
+    if (!show(th, t >= T.expand && t < T.flip + T.flipDur + 0.02)) return;
 
     // Opening from the notification
     const ex = P(t, T.expand, 0.5, ease.out);
@@ -789,11 +552,11 @@
       th.style.clipPath = `inset(${top}px ${left}px ${bottom}px ${left}px round ${rad}px)`;
     } else th.style.clipPath = "none";
 
-    // Camera: slow push toward the typing dots, whip cut to the montage and back
-    const sc = lerp(0.94, 1, ex) * (t < T.toThread ? lerp(1, 1.04, P(t, T.push, 1.07, ease.inOut)) : 1);
-    if (t < T.toThread) whip(inn, "mb-thread", t, null, T.montageIn, { dOut: T.montageIn - T.toMontage, s: sc });
-    else whip(inn, "mb-thread", t, T.toThread, null, {});
-    inn.style.opacity = t < T.toThread ? P(t, T.expand + 0.02, 0.22, ease.lin) : 1;
+    // Camera: a slow push toward the typing dots, held while Billett works in the background
+    // (the site steps the phone back meanwhile), then eased back as the phone returns.
+    let push = lerp(1, 1.04, P(t, T.push, 1.07, ease.inOut));
+    if (t >= T.backstageEnd) push = t >= T.backstageEnd + 0.4 ? 1 : lerp(1.04, 1, P(t, T.backstageEnd, 0.4, ease.inOut));
+    set(inn, { s: lerp(0.94, 1, ex) * push, o: P(t, T.expand + 0.02, 0.22, ease.lin) });
 
     // Composer
     const typingNow = t >= T.tapField + 0.05 && t < T.m2;
@@ -835,129 +598,10 @@
     }
   }
 
-  // ---------- scene 3: Billett at work ----------
-  const scanEase = cubicBezier(0.5, 0.0, 0.18, 1);
-  const scrollAt = (t) => FILLER * ROW_H * scanEase(clamp((t - T.scanStart) / (T.scanEnd - T.scanStart)));
-  function renderMontage(t) {
-    const m = $("montage");
-    if (!show(m, t >= T.montageIn && t < T.toThread)) return;
-
-    // Label stays put while the shots whip past underneath it
-    const lab = $("mLabel");
-    pop(lab, t, T.montageIn + 0.08, { from: 0.8, rise: -6 });
-    const pulse = 0.5 + 0.5 * Math.cos(2 * Math.PI * (t / 0.9));
-    lab.querySelector("i").style.opacity = 0.45 + 0.55 * pulse;
-
-    // Shot A+B: split screen, listings on top, calendar below
-    const ab = $("shotAB");
-    if (show(ab, t < T.toC)) {
-      whip($("pList"), "mb-plist", t, T.montageIn, T.toC, { dist: 200 });
-      whip($("pCal"), "mb-pcal", t, T.montageIn, T.toC, { dist: 250, dIn: 0.56 });
-      renderList(t);
-      renderCal(t);
-    }
-
-    // Shot C: best value
-    const c = $("shotC");
-    if (whip(c, "mb-shotc", t, T.toC, T.toD)) {
-      // Content rides in with the card, lightly staggered, then the price ticks down.
-      const base = T.toC - 0.12;
-      pop($("cBadge"), t, base + 0.3, { from: 0.7, rise: 4 });
-      for (const [id, dt] of [["cSec", 0], ["cSub", 0.04], ["cPrice", 0.08], ["cUsual", 0.14], ["cTotal", 0.2]]) {
-        const p = P(t, base + dt, 0.5, ease.out);
-        set($(id), { y: lerp(18, 0, p), o: clamp(p * 1.5) });
-      }
-      const cp = P(t, T.toC + 0.12, 0.8, ease.soft);
-      $("cNum").textContent = `$${Math.round(lerp(140, 109, cp))}`;
-    }
-
-    // Shot D: Saturday is free
-    const d = $("shotD");
-    if (whip(d, "mb-shotd", t, T.toD, T.toThread)) {
-      const base = T.toD + 0.04;
-      const g = P(t, base + 0.18, 0.5, ease.out);
-      set($("dGame"), { sy: lerp(0.2, 1, g), o: clamp(g * 3) });
-      [...$("dGame").children].forEach((ch) => { if (ch.id !== "dFree") ch.style.opacity = P(t, base + 0.3, 0.3, ease.lin); });
-      pop($("dFree"), t, base + 0.55, { from: 0.5, rise: 4 });
-      set($("dBusy"), { o: P(t, base, 0.3, ease.lin) });
-    }
-  }
-
-  function renderList(t) {
-    // Scan bar and counter
-    const scan = clamp((t - T.scanStart) / (T.scanEnd - T.scanStart));
-    const bar = $("scanBar");
-    bar.style.opacity = 1 - P(t, T.scanEnd, 0.25, ease.lin);
-    bar.querySelector("i").style.transform = `scaleX(${scanEase(scan)})`;
-    let count = Math.round(148 * ease.soft(scan));
-    const steps = [[T.f1, 148, 61], [T.f2, 61, 17], [T.f3, 17, 3]];
-    for (const [ts, a, b] of steps) if (t >= ts) count = Math.round(lerp(a, b, P(t, ts, 0.22, ease.out)));
-    $("cnt").textContent = count;
-    $("cntLbl").textContent = t >= T.sort ? "matches" : "listings";
-
-    // Filter chips
-    [["f1", T.f1], ["f2", T.f2], ["f3", T.f3]].forEach(([id, ts]) => {
-      const el = $(id);
-      el.classList.toggle("on", t >= ts);
-      const k = t >= ts ? spring(t - ts, 26, 0.5) : 0;
-      el.style.transform = `scale(${t >= ts ? lerp(0.9, 1, k) : 1})`;
-    });
-
-    // Rows: scroll fast (with vertical motion blur), then filter and rank
-    const s = scrollAt(t), s0 = scrollAt(t - 1 / 60);
-    const v = Math.abs(s - s0) * 60;
-    blur($("list"), "mb-rows", Math.min(4, v / 380));
-    // Rank: matches sorted by price rise to the top; ruled-out rows sink, dimmed.
-    const srt = P(t, T.sort, 0.45, ease.out);
-    const finals = rows.slice(FILLER);
-    const ranked = [...finals.filter((r) => !r.d.fail).sort((a, b) => a.d.price - b.d.price), ...finals.filter((r) => r.d.fail)];
-    const yRank = new Map(ranked.map((r, i) => [r, i * ROW_H]));
-    for (const r of rows) {
-      let y = r.i * ROW_H - s;
-      let o = 1, sc = 1;
-      if (r.i >= FILLER) {
-        y = lerp(r.i * ROW_H - s, yRank.get(r), srt);
-        if (r.d.fail) {
-          const ft = [0, T.f1, T.f2, T.f3][r.d.fail];
-          const dim = P(t, ft, 0.18, ease.out);
-          o = lerp(1, 0.32, dim);
-          r.strike.style.transform = `scaleX(${dim})`;
-        }
-        if (r.d.best) {
-          const hb = P(t, T.best, 0.3, ease.out);
-          r.hl.style.opacity = hb;
-          if (t >= T.best) pop(r.tag, t, T.best + 0.04, { from: 0.4, rise: 0 }); else r.tag.style.opacity = 0;
-        }
-      }
-      const vis = y > -ROW_H && y < 276 + ROW_H && o > 0.01;
-      if (!show(r.el, vis)) continue;
-      r.el.style.zIndex = r.d.best ? 3 : r.d.fail ? 1 : 2;
-      set(r.el, { y, o, sy: sc, sx: 1 });
-    }
-  }
-
-  function renderCal(t) {
-    const k = (t - T.sweep0) / T.sweepStep;
-    const idx = clamp(Math.floor(k), 0, 5);
-    const frac = clamp(k - Math.floor(k));
-    const pos = k < 0 ? 0 : k >= 5 ? 5 : idx + ease.out(clamp(frac / 0.6));
-    const sw = calEls.sweep;
-    sw.style.left = `${CAL.left + pos * CAL.colW}px`;
-    sw.style.opacity = P(t, T.sweep0 - 0.15, 0.2, ease.lin);
-    const cur = k < 0 ? -1 : Math.round(clamp(pos, 0, 5));
-    calEls.days.forEach((d, i) => d.classList.toggle("on", i === cur));
-    const f = calEls.free;
-    const x = t - T.free;
-    if (x <= 0) { f.style.opacity = 0; return; }
-    const g = P(t, T.free, 0.4, ease.out);
-    set(f, { sy: lerp(0.15, 1, g), o: clamp(x / 0.1) });
-  }
-
   // ---------- scene 5: turn to the inbox, open the tickets ----------
   function renderCube(t) {
     const cube = $("cube");
-    const vis = (t >= T.expand && t < T.montageIn) || (t >= T.toThread && t < T.toEnd + 0.5);
-    if (!show(cube, vis)) return;
+    if (!show(cube, t >= T.expand && t < T.toEnd + 0.5)) return;
     const inFlip = t >= T.flip && t < T.flip + T.flipDur;
     cube.style.background = inFlip ? "var(--bg-alt)" : t >= T.toEnd ? "#fff" : "transparent";
     const th = $("thread"), ma = $("mailapp");
@@ -1047,7 +691,6 @@
     renderLock(t);
     renderCube(t);
     renderThread(t);
-    renderMontage(t);
     renderEnd(t);
     renderStatus(t);
     renderTouch(t);
