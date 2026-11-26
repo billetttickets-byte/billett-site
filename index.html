@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Billett — your ticket concierge, by text</title>
-<meta name="description" content="Billett watches resale prices for your teams, artists and shows, texts you when great seats drop on a night you're free, and books them when you reply YES.">
+<meta name="description" content="Billett finds great seats for the teams and artists you love, on nights you're free, and books them when you reply YES.">
+<meta property="og:description" content="Billett finds great seats for the teams and artists you love, on nights you're free, and books them when you reply YES.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='24' width='84' height='52' rx='8' fill='%230071e3'/><circle cx='8' cy='50' r='9' fill='%23ffffff'/><circle cx='92' cy='50' r='9' fill='%23ffffff'/></svg>">
 <style>
   :root {
@@ -42,6 +43,16 @@
     letter-spacing: -0.015em;
     margin-bottom: 20px;
     color: var(--ink);
+  }
+  .lede {
+    font-size: clamp(21px, 2.4vw, 28px);
+    line-height: 1.25;
+    font-weight: 400;
+    color: var(--muted);
+    max-width: 680px;
+    margin: 0 auto;
+    letter-spacing: 0.004em;
+    text-wrap: balance;
   }
 
   /* Demo: the video in a black phone frame at every width. The waitlist sits under the video
@@ -370,6 +381,7 @@
   <main>
     <section class="hero wrap">
       <h1>Your ticket concierge, by text.</h1>
+      <p class="lede">Billett finds great seats for the teams and artists you love, on nights you're free, and books them when you reply YES.</p>
     </section>
 
     <section class="demo" aria-label="See Billett in action">
