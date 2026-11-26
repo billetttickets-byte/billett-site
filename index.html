@@ -121,6 +121,73 @@
     .phone { display: none; }
     .stills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; max-width: 760px; margin: 0 auto; }
   }
+  /* Demo video, "Billett in the Background" (7.52 to 14.12 s into the video): the phone steps
+     back to 70%, a live label sits above it, and the listings scan and the calendar check run on
+     cards that slide out from behind it, over a dimmed backdrop. The backstage script positions
+     everything from the phone's own box and drives it from the video's clock; otherwise hidden. */
+  .demo { position: relative; }
+  .backstage { position: absolute; left: 0; right: 0; top: 0; height: 0; overflow: hidden; pointer-events: none; visibility: hidden; }
+  .backstage.on { visibility: visible; }
+  .bs-dim {
+    position: absolute; top: 0; bottom: 0; opacity: 0;
+    background: radial-gradient(closest-side, rgba(29, 29, 31, 0.2), rgba(29, 29, 31, 0.1) 55%, rgba(29, 29, 31, 0));
+  }
+  .bs-label {
+    position: absolute; left: 0; top: 0;
+    display: flex; align-items: center; gap: 0.55em;
+    height: 2.3em; padding: 0 1.05em 0 0.95em; border-radius: 999px;
+    background: #fff; color: var(--ink);
+    font-size: 15px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap;
+    box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+    transform-origin: 50% 100%; opacity: 0;
+  }
+  /* Live indicator: a solid Billett-blue dot with a soft ring that expands and fades, once a second. */
+  .bs-live { position: relative; flex: none; width: 0.55em; height: 0.55em; }
+  .bs-live::before, .bs-live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--blue); }
+  .bs-live::after { animation: bs-pulse 1s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+  @keyframes bs-pulse { from { transform: scale(1); opacity: 0.55; } to { transform: scale(3); opacity: 0; } }
+  .bs-card {
+    position: absolute; left: 0; top: 0;
+    padding: 0.95em 1.05em 1.05em; border-radius: 1.15em;
+    background: #fff; color: var(--ink);
+    font-size: 13px; line-height: 1.25; letter-spacing: -0.01em;
+    box-shadow: 0 16px 36px -18px rgba(0, 0, 0, 0.38), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+  }
+  .bs-card svg { flex: none; width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .bs-kicker { font-size: 0.76em; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .bs-count { display: flex; align-items: baseline; gap: 0.35em; margin-top: 0.3em; white-space: nowrap; }
+  .bs-count b { font-size: 2em; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .bs-count span { font-size: 0.85em; color: var(--muted); }
+  .bs-bar { height: 3px; margin-top: 0.65em; border-radius: 2px; background: #ececf0; overflow: hidden; }
+  .bs-bar i { display: block; height: 100%; background: var(--blue); transform-origin: 0 50%; transform: scaleX(0); }
+  .bs-checks { list-style: none; display: grid; gap: 0.4em; margin-top: 0.75em; }
+  .bs-checks li { display: flex; align-items: center; gap: 0.4em; font-size: 0.92em; white-space: nowrap; opacity: 0; }
+  .bs-checks svg { color: var(--blue); }
+  .bs-best { margin-top: 0.8em; padding: 0.55em 0.65em 0.6em 0.8em; border-radius: 0.6em; background: rgba(0, 113, 227, 0.08); box-shadow: inset 3px 0 0 var(--blue); transform-origin: 0 50%; opacity: 0; }
+  .bs-best small { display: block; font-size: 0.74em; font-weight: 600; color: var(--blue); }
+  .bs-best > b { display: block; margin-top: 0.15em; font-size: 0.95em; font-weight: 600; text-wrap: balance; }
+  .bs-best span { display: block; margin-top: 0.15em; font-size: 0.8em; color: var(--muted); white-space: nowrap; }
+  .bs-best span b { font-size: 1.65em; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .bs-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.22em; height: 6.4em; margin-top: 0.7em; }
+  .bs-day { position: relative; border-radius: 0.35em; transition: background-color 0.12s; }
+  .bs-day > span { display: block; padding-top: 0.15em; text-align: center; font-size: 0.72em; font-weight: 600; color: var(--muted); }
+  .bs-day.on { background: rgba(0, 113, 227, 0.09); }
+  .bs-day.on > span { color: var(--blue); }
+  .bs-col { position: absolute; left: 0.12em; right: 0.12em; top: 1.35em; bottom: 0.15em; }
+  .bs-col i { position: absolute; left: 0; right: 0; border-radius: 0.25em; }
+  .bs-busy { background: #e5e5ea; }
+  .bs-slot { display: grid; place-items: center; background: var(--blue); color: #fff; transform-origin: 50% 0; opacity: 0; }
+  .bs-slot svg { width: 0.8em; height: 0.8em; stroke-width: 2.2; }
+  .bs-when { margin-top: 0.75em; font-size: 0.95em; font-weight: 600; white-space: nowrap; }
+  .bs-free {
+    display: inline-flex; align-items: center; gap: 0.3em; height: 1.9em; margin-top: 0.45em; padding: 0 0.65em 0 0.75em;
+    border-radius: 999px; background: var(--blue); color: #fff; font-size: 0.9em; font-weight: 600; white-space: nowrap;
+    transform-origin: 0 50%; opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .backstage { display: none; }
+  }
   /* How it works: one step per row, a big blue number on the left. */
   .how { padding-top: 96px; padding-bottom: 128px; }
   .steps { list-style: none; margin: 0 auto; padding: 0; max-width: 600px; display: grid; gap: 64px; }
@@ -306,6 +373,27 @@
     </section>
 
     <section class="demo" aria-label="See Billett in action">
+      <div class="backstage" id="backstage" aria-hidden="true">
+        <div class="bs-dim" id="bsDim"></div>
+        <div class="bs-card" id="bsList">
+          <div class="bs-kicker">Seats</div>
+          <div class="bs-count"><b id="bsCount">0</b><span id="bsCountLbl">listings</span></div>
+          <div class="bs-bar"><i id="bsBar"></i></div>
+          <ul class="bs-checks">
+            <li id="bsF1"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 6.3 4.9 8.7 9.6 3.4"/></svg>2 together</li>
+            <li id="bsF2"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 6.3 4.9 8.7 9.6 3.4"/></svg>Clear view</li>
+            <li id="bsF3"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 6.3 4.9 8.7 9.6 3.4"/></svg>Under $140</li>
+          </ul>
+          <div class="bs-best" id="bsBest"><small>Best value</small><b>Sec 214, Row 6</b><span><b id="bsPrice">$140</b>/seat</span></div>
+        </div>
+        <div class="bs-card" id="bsCal">
+          <div class="bs-kicker">Your calendar</div>
+          <div class="bs-week" id="bsWeek"></div>
+          <div class="bs-when">Sat 7:30 PM</div>
+          <div class="bs-free" id="bsFree">Free<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.4 6.3 4.9 8.7 9.6 3.4"/></svg></div>
+        </div>
+        <div class="bs-label" id="bsLabel"><span class="bs-live"></span>Billett in the Background</div>
+      </div>
       <div class="wrap demo-stack">
         <div class="phone">
           <div class="screen" id="demoScreen">
@@ -584,6 +672,155 @@
       return;
     }
     watch();
+  })();
+</script>
+<script>
+  // Demo video, "Billett in the Background". From 7.52 s into the video the phone steps back to
+  // 70% while Billett scans listings and checks the calendar on cards beside it; it is back to its
+  // exact size and place by 14.12 s, as "Found 2 in Sec 214" arrives. The video's own clock drives
+  // it, so it stays in step through pauses and loops. Outside that window the phone is untouched.
+  (function () {
+    const video = document.getElementById("demoVideo");
+    const stage = document.getElementById("backstage");
+    const phone = video && video.closest(".phone");
+    if (!video || !stage || !phone) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const $ = (id) => document.getElementById(id);
+    const el = {
+      dim: $("bsDim"), label: $("bsLabel"), list: $("bsList"), cal: $("bsCal"),
+      count: $("bsCount"), countLbl: $("bsCountLbl"), bar: $("bsBar"),
+      checks: [$("bsF1"), $("bsF2"), $("bsF3")], best: $("bsBest"), price: $("bsPrice"), free: $("bsFree"),
+    };
+
+    // Seconds into the video (video-src/scene.html holds the phone's screen on "typing" meanwhile).
+    const T = {
+      start: 7.52, end: 13.72, move: 0.4,            // phone out to 70%, and back
+      label: 7.6, labelDur: 0.3,
+      listIn: 7.75, calIn: 7.95, cardIn: 0.5, cardsOut: 13.3, cardOut: 0.35,
+      scan: [8.1, 9.9], filters: [10.0, 10.3, 10.6], matches: 10.8, best: 11.1, tick: [11.15, 11.95],
+      sweep: 8.6, step: 0.3, slot: 10.35, free: 10.7,
+    };
+    const SCALE = 0.7;  // the phone's size while Billett works
+    const DROP = 0.04;  // and how far it moves down (share of its height), for room above it
+
+    const clamp = (x) => Math.min(1, Math.max(0, x));
+    const lerp = (a, b, p) => a + (b - a) * p;
+    const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+    const easeIn = (x) => x * x * x;
+    const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(2 - 2 * x, 3) / 2);
+    const P = (t, t0, d, e = easeOut) => e(clamp((t - t0) / d));
+    function spring(x) { // 0 to 1 with a small overshoot
+      if (x <= 0) return 0;
+      const w = 24, z = 0.62, wd = w * Math.sqrt(1 - z * z);
+      return 1 - Math.exp(-z * w * x) * (Math.cos(wd * x) + ((z * w) / wd) * Math.sin(wd * x));
+    }
+
+    // The week's evenings, 5 to 10 PM, Monday to Sunday. Saturday from 7:30 is the open slot.
+    const BUSY = [[0, 18, 19.5], [1, 17, 18.5], [1, 19.5, 21], [2, 18.5, 20.5], [3, 17.5, 19], [4, 19, 22], [5, 17, 18], [6, 18, 21]];
+    const span = (a, b) => `top:${((a - 17) / 5) * 100}%;height:${((b - a) / 5) * 100}%`;
+    const days = "MTWTFSS".split("").map((letter) => {
+      const day = document.createElement("div");
+      day.className = "bs-day";
+      day.innerHTML = `<span>${letter}</span><div class="bs-col"></div>`;
+      $("bsWeek").appendChild(day);
+      return day;
+    });
+    BUSY.forEach(([d, a, b]) => days[d].lastChild.insertAdjacentHTML("beforeend", `<i class="bs-busy" style="${span(a, b)}"></i>`));
+    days[5].lastChild.insertAdjacentHTML("beforeend", `<i class="bs-slot" style="${span(19.5, 22)}">${el.free.querySelector("svg").outerHTML}</i>`);
+    const slot = days[5].querySelector(".bs-slot");
+
+    // Geometry, from the phone's layout box (transforms don't change it): the shrunken phone,
+    // the label centered above it, and a card on each side with its inner edge tucked behind it.
+    let geo = null;
+    function measure() {
+      const pw = phone.offsetWidth, ph = phone.offsetHeight, px = phone.offsetLeft;
+      const w = pw * SCALE, h = ph * SCALE;
+      const left = px + (pw - w) / 2, top = (ph - h) / 2 + DROP * ph;
+      const tight = left < 160;
+      const gutter = tight ? 8 : 16, tuck = tight ? 10 : 24, font = tight ? 10.5 : 13;
+      const cardW = Math.min(pw * 0.62, left + tuck - gutter);
+      stage.style.top = phone.offsetTop + "px";
+      stage.style.height = ph + "px";
+      for (const card of [el.list, el.cal]) { card.style.width = cardW + "px"; card.style.fontSize = font + "px"; }
+      el.list.style.paddingRight = tuck + 1.05 * font + "px";
+      el.cal.style.paddingLeft = tuck + 1.05 * font + "px";
+      el.label.style.fontSize = (pw < 300 ? 13 : 15) + "px";
+      const dimW = Math.min(stage.clientWidth, (w + 2 * cardW) * 1.25);
+      el.dim.style.left = px + pw / 2 - dimW / 2 + "px";
+      el.dim.style.width = dimW + "px";
+      geo = {
+        ph, hide: cardW - tuck,
+        listX: left + tuck - cardW, listY: top + h * 0.1,
+        calX: left + w - tuck, calY: top + h * 0.9 - el.cal.offsetHeight,
+        labelX: px + pw / 2 - el.label.offsetWidth / 2, labelY: top - (pw < 300 ? 12 : 16) - el.label.offsetHeight,
+      };
+    }
+
+    let on = false;
+    function draw(t) {
+      if (reduce.matches || !(t >= T.start && t < T.end + T.move + 0.05)) {
+        if (on) { on = false; stage.classList.remove("on"); phone.style.transform = ""; phone.style.willChange = ""; }
+        return;
+      }
+      if (!on) { on = true; phone.style.willChange = "transform"; stage.classList.add("on"); geo = null; }
+      if (!geo) measure();
+      const g = geo;
+
+      // The phone steps back (and a little down), then returns to exactly its own size and place.
+      const k = P(t, T.start, T.move, easeInOut) * (1 - P(t, T.end, T.move, easeInOut));
+      phone.style.transform = k > 0 ? `translateY(${(DROP * g.ph * k).toFixed(2)}px) scale(${(1 - (1 - SCALE) * k).toFixed(4)})` : "";
+      el.dim.style.opacity = k;
+
+      // The label fades and scales in as the phone steps back, and out as it returns.
+      const lab = P(t, T.label, T.labelDur) * (1 - P(t, T.end, 0.3, easeIn));
+      el.label.style.opacity = lab;
+      el.label.style.transform = `translate(${g.labelX}px, ${g.labelY}px) scale(${lerp(0.9, 1, lab)})`;
+
+      // The cards slide out from behind the phone, and tuck back in before it returns.
+      const back = P(t, T.cardsOut, T.cardOut, easeIn);
+      const li = P(t, T.listIn, T.cardIn) * (1 - back), ci = P(t, T.calIn, T.cardIn) * (1 - back);
+      el.list.style.transform = `translate(${g.listX + g.hide * (1 - li)}px, ${g.listY}px)`;
+      el.cal.style.transform = `translate(${g.calX - g.hide * (1 - ci)}px, ${g.calY}px)`;
+      el.list.style.opacity = clamp(li * 2.5);
+      el.cal.style.opacity = clamp(ci * 2.5);
+
+      // Seats: scan every listing, apply the three filters, surface the best value.
+      const scan = easeOut(clamp((t - T.scan[0]) / (T.scan[1] - T.scan[0])));
+      let count = Math.round(148 * scan);
+      [[148, 61], [61, 17], [17, 3]].forEach(([a, b], i) => { if (t >= T.filters[i]) count = Math.round(lerp(a, b, P(t, T.filters[i], 0.25))); });
+      el.count.textContent = count;
+      el.countLbl.textContent = t >= T.matches ? "matches" : "listings";
+      el.bar.style.transform = `scaleX(${scan})`;
+      el.checks.forEach((c, i) => {
+        const x = t - T.filters[i];
+        c.style.opacity = clamp(x / 0.12);
+        c.style.transform = `translateY(${(1 - spring(x)) * 6}px)`;
+      });
+      const b = t - T.best;
+      el.best.style.opacity = clamp(b / 0.15);
+      el.best.style.transform = `scale(${lerp(0.9, 1, spring(b))})`;
+      el.price.textContent = "$" + Math.round(lerp(140, 109, P(t, T.tick[0], T.tick[1] - T.tick[0], easeInOut)));
+
+      // Calendar: sweep Monday to Saturday, then Saturday 7:30 PM comes up free.
+      const day = Math.floor((t - T.sweep) / T.step);
+      days.forEach((d, i) => d.classList.toggle("on", i === Math.min(5, day)));
+      slot.style.opacity = clamp((t - T.slot) / 0.1);
+      slot.style.transform = `scaleY(${lerp(0.2, 1, P(t, T.slot, 0.4))})`;
+      const f = t - T.free;
+      el.free.style.opacity = clamp(f / 0.12);
+      el.free.style.transform = `scale(${lerp(0.6, 1, spring(f))})`;
+    }
+
+    let raf = 0;
+    function frame() {
+      raf = 0;
+      draw(video.currentTime);
+      if (!video.paused && !video.ended) raf = requestAnimationFrame(frame);
+    }
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    ["play", "playing", "pause", "seeked", "timeupdate"].forEach((ev) => video.addEventListener(ev, kick));
+    window.addEventListener("resize", () => { geo = null; kick(); });
+    if (reduce.addEventListener) reduce.addEventListener("change", kick);
   })();
 </script>
 <script>
