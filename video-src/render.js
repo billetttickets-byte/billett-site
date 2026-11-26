@@ -33,8 +33,9 @@ const WORKERS = Number(process.env.WORKERS || 4);
 const FFMPEG = process.env.FFMPEG || "ffmpeg";
 
 // Stills: the poster (also reduced-motion still 1), then stills 2 and 3.
+// The poster is frame 0, which the loop also ends on, so poster -> playback -> loop never jumps.
 const STILLS = [
-  { name: "demo-1-deal.webp", t: 2.6 },
+  { name: "demo-1-deal.webp", t: 0 },
   { name: "demo-2-booked.webp", t: 18.7 },
   { name: "demo-3-tickets.webp", t: 23.0 },
 ];
@@ -107,9 +108,9 @@ function encode() {
   ff([...input, ...vf, ...vp9, "-deadline", "good", "-cpu-used", "4", "-pass", "1", "-f", "null", "/dev/null"]);
   ff([...input, ...vf, ...vp9, ...tags, "-deadline", "good", "-cpu-used", "1", "-pass", "2", path.join(OUT_DIR, "billett-demo.webm")]);
 
-  console.log("MP4 (H.264 High, yuv420p, faststart)…");
-  // Level 4.0 caps the reference frames so older phones decode it in hardware.
-  ff([...input, ...vf, "-c:v", "libx264", "-preset", "veryslow", "-crf", "27", "-profile:v", "high", "-level:v", "4.0",
+  console.log("MP4 (H.264 Main@4.0, yuv420p, faststart)…");
+  // Main profile at level 4.0 decodes in hardware on every iPhone and Android phone in use.
+  ff([...input, ...vf, "-c:v", "libx264", "-preset", "veryslow", "-crf", "27", "-profile:v", "main", "-level:v", "4.0",
     "-tune", "animation", "-g", "150", "-movflags", "+faststart", ...tags, "-an", path.join(OUT_DIR, "billett-demo.mp4")]);
 
   console.log("Poster and stills (WebP)…");

@@ -53,23 +53,43 @@
     letter-spacing: 0.004em;
   }
 
-  /* demo video: phone screen on mobile, inside a phone frame on desktop */
+  /* Demo: the video in a black phone frame at every width. The waitlist sits under the video
+     and its caption on wider screens, and above the video on phones (see the 480px query). */
   .demo { padding: 0 0 24px; }
+  .demo-stack { display: flex; flex-direction: column; }
   .phone {
     position: relative;
-    max-width: min(360px, calc((100vh - 40px) * 720 / 1560));
+    width: 100%;
+    max-width: calc(min(360px, (100vh - 120px) * 720 / 1560) + 24px);
     margin: 0 auto;
+    padding: 12px;
+    background: #1d1d1f;
+    border-radius: 54px;
+    box-shadow:
+      inset 0 0 0 1.5px #3a3a3c,
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 50px 90px -45px rgba(0, 0, 0, 0.45);
+  }
+  /* The screen shows the poster (the video's first and last frame) until a real frame is up,
+     so there is never a black box, before playback or between loops. */
+  .screen {
+    position: relative;
+    overflow: hidden;
+    border-radius: 42px;
+    aspect-ratio: 720 / 1560;
+    background: #e7ebf4 url("media/demo-1-deal.webp") center / cover no-repeat;
   }
   .demo-video {
     display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 720 / 1560;
+    height: 100%;
     object-fit: cover;
-    background: #000;
-    border-radius: 30px;
-    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    border-radius: inherit;
+    background: #e7ebf4;
+    opacity: 0;
+    transition: opacity 0.2s;
   }
+  .screen.is-playing .demo-video { opacity: 1; }
   /* Tap-to-play (slow or data-saving connections): sits below the poster's notification */
   .play {
     position: absolute;
@@ -96,6 +116,7 @@
   .play svg { width: 20px; height: 20px; }
   .play:focus-visible { outline: 3px solid rgba(0, 113, 227, 0.5); outline-offset: 3px; }
   .demo-alt {
+    width: 100%;
     max-width: 460px;
     margin: 16px auto 0;
     text-align: center;
@@ -118,22 +139,8 @@
   /* Reduced motion: three stills instead of the video (the video is never fetched). */
   @media (prefers-reduced-motion: reduce) {
     .phone { display: none; }
-    .stills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 760px; margin: 0 auto; }
+    .stills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; max-width: 760px; margin: 0 auto; }
   }
-  @media (min-width: 761px) {
-    .phone {
-      max-width: calc(min(360px, (100vh - 120px) * 720 / 1560) + 24px);
-      padding: 12px;
-      background: #1d1d1f;
-      border-radius: 54px;
-      box-shadow:
-        inset 0 0 0 1.5px #3a3a3c,
-        0 0 0 1px rgba(0, 0, 0, 0.08),
-        0 50px 90px -45px rgba(0, 0, 0, 0.45);
-    }
-    .demo-video { border-radius: 42px; box-shadow: none; }
-  }
-
   .how {
     padding-top: 96px;
     padding-bottom: 120px;
@@ -271,6 +278,26 @@
     .demo-alt { font-size: 13px; text-wrap: wrap; }
     .how { grid-template-columns: 1fr; gap: 36px; padding-top: 64px; padding-bottom: 80px; }
   }
+  /* Phones: the waitlist field moves above the video (first screen) and the phone is about
+     30% smaller (262px wide instead of 346px), with the same frame scaled to match. */
+  @media (max-width: 480px) {
+    .hero { padding-bottom: 0; }
+    .join-slot { order: -1; }
+    .phone {
+      max-width: min(262px, calc((100vh - 60px) * 720 / 1560 + 16px));
+      margin-top: 36px;
+      padding: 8px;
+      border-radius: 37px;
+      box-shadow:
+        inset 0 0 0 1px #3a3a3c,
+        0 0 0 1px rgba(0, 0, 0, 0.08),
+        0 34px 60px -32px rgba(0, 0, 0, 0.45);
+    }
+    .screen { border-radius: 29px; }
+    .stills { margin-top: 36px; }
+    .play { height: 40px; padding: 0 16px 0 12px; gap: 6px; font-size: 15px; }
+    .play svg { width: 16px; height: 16px; }
+  }
 </style>
 </head>
 <body>
@@ -283,17 +310,19 @@
     </section>
 
     <section class="demo" aria-label="See Billett in action">
-      <div class="wrap">
+      <div class="wrap demo-stack">
         <div class="phone">
-          <video id="demoVideo" class="demo-video" width="720" height="1560" muted playsinline loop autoplay preload="none"
-            disablepictureinpicture disableremoteplayback poster="media/demo-1-deal.webp"
-            aria-label="30-second demo, no sound. Billett texts that Warriors vs Celtics seats for Saturday at 7:30 just dropped to $109 each. You reply, Billett checks the listings and your calendar, finds 2 seats in Section 214, Row 6 for $218 all-in, and books them when you reply YES. The tickets arrive by email with QR codes.">
-            <source data-src="media/billett-demo.webm" type="video/webm">
-            <source data-src="media/billett-demo.mp4" type="video/mp4">
-          </video>
-          <button class="play" id="demoPlay" type="button" aria-label="Play the demo video" hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a.8.8 0 0 0 1.2.7l10.2-6.4a.8.8 0 0 0 0-1.4L9.2 4.9A.8.8 0 0 0 8 5.6z" fill="currentColor"/></svg>Play demo
-          </button>
+          <div class="screen" id="demoScreen">
+            <video id="demoVideo" class="demo-video" width="720" height="1560" muted playsinline loop autoplay preload="none"
+              disablepictureinpicture disableremoteplayback poster="media/demo-1-deal.webp"
+              aria-label="30-second demo, no sound. Billett texts that Warriors vs Celtics seats for Saturday at 7:30 just dropped to $109 each. You reply, Billett checks the listings and your calendar, finds 2 seats in Section 214, Row 6 for $218 all-in, and books them when you reply YES. The tickets arrive by email with QR codes.">
+              <source data-src="media/billett-demo.webm" type="video/webm">
+              <source data-src="media/billett-demo.mp4" type="video/mp4">
+            </video>
+            <button class="play" id="demoPlay" type="button" aria-label="Play the demo video" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.6v12.8a.8.8 0 0 0 1.2.7l10.2-6.4a.8.8 0 0 0 0-1.4L9.2 4.9A.8.8 0 0 0 8 5.6z" fill="currentColor"/></svg>Play demo
+            </button>
+          </div>
         </div>
 
         <ol class="stills">
@@ -302,6 +331,9 @@
           <li><img src="media/demo-3-tickets.webp" width="720" height="1560" loading="lazy" alt="An email titled Your tickets: Warriors vs Celtics, with 2 tickets that have QR codes and an Add to Wallet button."><span>Your tickets arrive by email.</span></li>
         </ol>
 
+        <p class="demo-alt">In the demo: Billett texts a deal, checks seats and your calendar, books on YES, and emails your tickets.</p>
+
+        <div class="join-slot">
       <form class="join" id="join" autocomplete="on" novalidate>
         <div class="pill" id="pill">
           <span class="ghost" id="ghost"><span id="ghostText"></span><span class="caret"></span></span>
@@ -311,8 +343,7 @@
           </button>
         </div>
       </form>
-
-        <p class="demo-alt">In the demo: Billett texts a deal, checks seats and your calendar, books on YES, and emails your tickets.</p>
+        </div>
       </div>
     </section>
 
@@ -470,13 +501,30 @@
 <script>
   // Demo video. It loads only when it nears the viewport, never under reduced motion
   // (CSS shows three stills instead), and waits for a tap on slow or data-saving connections.
+  // The poster stays up until a real frame is on screen.
   (function () {
     const video = document.getElementById("demoVideo");
+    const screen = document.getElementById("demoScreen");
     const play = document.getElementById("demoPlay");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     const conn = navigator.connection;
     const slow = !!conn && (conn.saveData === true || /^(slow-2g|2g|3g)$/.test(conn.effectiveType || ""));
-    let loaded = false;
+    const RETRY_ON = ["touchstart", "touchend", "pointerdown", "click", "keydown", "scroll"];
+    let loaded = false, inView = false, armed = false, trying = false;
+
+    // iOS needs the properties as well as the attributes for muted inline autoplay.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+
+    // Swap the poster for the video only once a frame has actually been presented.
+    function reveal() { screen.classList.add("is-playing"); }
+    video.addEventListener("playing", () => {
+      if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(reveal);
+      else video.addEventListener("timeupdate", function first() {
+        if (video.currentTime > 0) { reveal(); video.removeEventListener("timeupdate", first); }
+      });
+    });
 
     function load() {
       if (loaded) return;
@@ -484,29 +532,56 @@
       video.querySelectorAll("source[data-src]").forEach((s) => { s.src = s.dataset.src; });
       video.load();
     }
-    function start() {
+
+    // Autoplay can be refused (iOS Low Power Mode, data saver, browser settings). Then the
+    // poster stays up and the first touch, click, key or scroll anywhere starts the video.
+    function arm() {
+      if (armed) return;
+      armed = true;
+      RETRY_ON.forEach((ev) => window.addEventListener(ev, attempt, { capture: true, passive: true }));
+    }
+    function disarm() {
+      armed = false;
+      RETRY_ON.forEach((ev) => window.removeEventListener(ev, attempt, { capture: true }));
+    }
+    function attempt() {
+      if (trying) return;
       load();
+      video.muted = true;
       const p = video.play();
-      if (p) p.catch(() => {});
+      if (!p || !p.then) return;
+      trying = true;
+      p.then(() => { disarm(); if (!inView) video.pause(); })
+        .catch(arm)
+        .then(() => { trying = false; });
     }
 
-    reduce.addEventListener("change", (e) => { if (e.matches && loaded) video.pause(); });
+    function watch() {
+      if (!("IntersectionObserver" in window)) { inView = true; attempt(); return; }
+      // Fetch a little before it scrolls into view; play while on screen, pause when off.
+      const near = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { load(); near.disconnect(); }
+      }, { rootMargin: "300px 0px" });
+      near.observe(video);
+      new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          inView = e.isIntersecting;
+          if (inView) attempt();
+          else if (loaded) video.pause();
+        });
+      }, { threshold: 0.2 }).observe(video);
+    }
+
+    if (reduce.addEventListener) reduce.addEventListener("change", (e) => { if (e.matches && loaded) video.pause(); });
     if (reduce.matches) return;
 
     if (slow) {
       video.removeAttribute("autoplay");
       play.hidden = false;
-      play.addEventListener("click", () => { play.hidden = true; start(); });
+      play.addEventListener("click", () => { play.hidden = true; inView = true; attempt(); watch(); });
       return;
     }
-
-    if (!("IntersectionObserver" in window)) { start(); return; }
-    new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) start();
-        else if (loaded) video.pause();
-      });
-    }, { rootMargin: "300px 0px" }).observe(video);
+    watch();
   })();
 </script>
 </body>
